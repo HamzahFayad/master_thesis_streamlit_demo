@@ -1,0 +1,45 @@
+import streamlit as st
+
+import pandas as pd
+df = pd.DataFrame({
+  "country": ["Germany", "France", "Uganda"],
+  'second': [10, 20, 30]
+})
+
+
+
+with st.sidebar:
+    country_selectbox = st.selectbox(
+        "Select a Country:",
+        df["country"].tolist()
+    )
+    add_radio = st.radio(
+        "Choose a shipping method",
+        ("Standard (5-15 days)", "Express (2-5 days)")
+    )
+    
+
+st.title(":red[SANDBOX U5MR] - Child Mortality Rate Simulation")
+about = '''
+        A demo tool which is part of a master thesis project titled:     
+        *Use of machine learning to predict child mortality rates and identify relevant influencing indicators: A simulation-based country-level analysis.*
+        
+        Statistics show that childrens' survival chances are steadily increasing globally while differences between countries remain large.
+        In 2022, around 5 million deaths of children under five were recorded (rate: 38 per 1000) - a 50% reduction since 2000.
+        The SDG goal 3.2.1 intends to reduce the child mortality rate to 25 per 1000 worldwide until 2030.
+        According to recent reports by UN IGME this goal will not be reached in over 60 countries as of now.
+        
+        This hypothetical simulation tool aims users to learn correlations between different 
+        socioeconomic and health related indicators on child mortality rate per country.      
+        Due to the highly sensitive topic and the use of only aggregated country-level data,
+        this tool does not provide causal effects but rather just potential correlations between features and the target.
+        It can provide first insights on which indicator has a big effect on the target value.
+        
+        All data come from *Our World in Data (https://ourworldindata.org/)*, primarly gathered from UN, WHO, World Bank, UNICEF, UN IGME. 
+        '''
+st.markdown(about)
+
+# Show selected country
+st.write(country_selectbox)
+filtered_df = df[df["country"] == country_selectbox]
+#st.dataframe(filtered_df)
