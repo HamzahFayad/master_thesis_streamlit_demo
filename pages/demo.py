@@ -4,34 +4,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import seaborn as sns
 
-title = ":orange[U5MR] - Child Mortality Rate"
-about = '''
-        This is a demo tool - part of a master thesis project titled:     
-        *Use of machine learning to predict child mortality rates and identify relevant influencing indicators: A simulation-based country-level analysis.*
-        
-        Statistics show that childrens' survival chances are steadily increasing globally while differences between countries remain large.
-        In 2022, around 5 million deaths of children under five were recorded (rate: 38 per 1000) - a 50% reduction since 2000.
-        The SDG goal 3.2.1 intends to reduce the child mortality rate to 25 per 1000 worldwide until 2030.
-        According to recent reports by UN IGME this goal will not be reached in over 60 countries as of now.
-        
-        This hypothetical simulation tool aims users to learn correlations between different 
-        socioeconomic and health related indicators on child mortality rate per country.      
-        Due to the highly sensitive topic and the use of only aggregated country-level data,
-        this tool does not provide causal effects but rather just potential correlations between features and the target.
-        It can provide first insights on which indicator has a big effect on the target value.
-        
-        All data come from *Our World in Data (https://ourworldindata.org/)*, primarly gathered from UN, WHO, World Bank, UNICEF, UN IGME. 
-        '''
-st.title(title)
-st.markdown(about)
-
-raw_df = pd.read_csv("./reference_data/raw_dataset.csv")
-fig, ax = plt.subplots()
-plt.figure(figsize=(15,2))
-sns.lineplot(data=raw_df, x="Year", y="child_mortality_igme", ax=ax, errorbar=None)
-ax.set_ylabel("U5MR per 1000 live births")
-ax.set_title("Overall Global Trend of Child Mortality Rate")
-st.pyplot(fig)
+st.title("Demo")
 
 
 #reference dataset
@@ -53,7 +26,6 @@ years_select = st.sidebar.multiselect(
     default=[],
     placeholder="Available Years",
 )
-
 years_df = base_df[base_df["Year"].isin(years_select)].copy()
 
  
@@ -63,7 +35,7 @@ modified_df = years_df.copy()
 with st.sidebar:
     if years_select and country_select is not None:
         st.divider()
-        st.subheader(f"Adjust indicators to simulate hypothetical scenarios of child mortality rate in *{country_select}*")
+        st.subheader(f"Adjust indicators to simulate hypothetical scenarios of child mortality rate in: :orange[*{country_select}*]")
         st.space()
         #Annual Healthcare Exp. per capita
         ahec = st.slider(
@@ -138,6 +110,9 @@ with st.sidebar:
         modified_df["share_without_improved_water"] *= (1 + water / 100)
 
 if years_select and country_select is not None:
+    st.write("Original")
+    years_df
+    st.write("Modified")
     modified_df
 # Show selected country
 #st.write(country_selectbox)
