@@ -5,6 +5,7 @@ plt.style.use('ggplot')
 import seaborn as sns
 
 title = ":orange[U5MR] - Child Mortality Rate"
+subtitle = ":orange[Simulate indicator effects on U5MR]"
 about = '''
         This is a demo tool - part of a master thesis project titled:     
         *Use of machine learning to predict child mortality rates and identify relevant influencing indicators: A simulation-based country-level analysis.*
@@ -20,9 +21,11 @@ about = '''
         this tool does not provide causal effects but rather just potential correlations between features and the target.
         It can provide first insights on which indicator has a big effect on the target value.
         
-        All data come from *Our World in Data (https://ourworldindata.org/)*, primarly gathered from UN, WHO, World Bank, UNICEF, UN IGME. 
+        All data come from *Our World in Data (https://ourworldindata.org/)*, primarly gathered from UN, WHO, World Bank, UNICEF, UN IGME.
+        Indicator *help descriptions* in the demos' sidebar were taken from Our World in Data. 
         '''
 st.title(title)
+st.subheader(subtitle)
 st.markdown(about)
 
 raw_df = pd.read_csv("./reference_data/raw_dataset.csv")
@@ -32,4 +35,3 @@ sns.lineplot(data=raw_df, x="Year", y="child_mortality_igme", ax=ax, errorbar=No
 ax.set_ylabel("U5MR per 1000 live births")
 ax.set_title("Overall Global Trend of Child Mortality Rate")
 st.pyplot(fig)
-
