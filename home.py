@@ -6,7 +6,7 @@ import seaborn as sns
 
 st.set_page_config(layout="wide")
 
-title = ":orange[U5MR] - Child Mortality Rate"
+title = ":orange[U5MR*] - Child Mortality Rate"
 subtitle = ":orange[Simulate indicator effects on U5MR]"
 about = '''
         This is a demo tool - part of a master thesis project titled:     
@@ -34,6 +34,8 @@ st.subheader(subtitle)
 st.markdown(about)
 st.space()
 st.page_link("pages/demo.py", label="Simulator Demo", icon="🌎")
+st.space()
+st.caption("*U5MR = Under-Five Mortality Rate")
 st.divider()
 
 @st.cache_data
