@@ -6,9 +6,9 @@ import joblib
 @st.cache_resource
 def load_models():
     return {
-        "low": joblib.load("model/quantile_0.25.pkl"),    
-        "med": joblib.load("model/quantile_0.5.pkl"),   
-        "high": joblib.load("model/quantile_0.75.pkl")
+        "low": joblib.load("model/quantile_025.pkl"),    
+        "med": joblib.load("model/quantile_05.pkl"),   
+        "high": joblib.load("model/quantile_075.pkl")
     } 
       
 @st.cache_data
@@ -16,19 +16,20 @@ def load_df():
     df = pd.read_csv("reference_data/base_df.csv")
     return df
  
+ 
+slider_vars = {
+    "ahec": 0,
+    "gdp": 0, 
+    "nm": 0, 
+    "phys": 0, 
+    "vaccination": 0, 
+    "urban": 0, 
+    "undernourishment": 0, 
+    "water": 0,
+    "school": 0    
+}
 
 def build_sidebar(years_df, years_select, country_select):
-    slider_vars = {
-        "ahec": 0,
-        "gdp": 0, 
-        "nm": 0, 
-        "phys": 0, 
-        "vaccination": 0, 
-        "urban": 0, 
-        "undernourishment": 0, 
-        "water": 0,
-        "school": 0    
-    }
     with st.sidebar:
         if years_select and country_select is not None:
             st.divider()
@@ -194,3 +195,4 @@ def build_sidebar(years_df, years_select, country_select):
                 st.session_state.simulate_btn = True
         
     return slider_vars
+ 

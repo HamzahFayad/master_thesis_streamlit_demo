@@ -3,11 +3,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import seaborn as sns
-import joblib
 
+from utils import ratio_health_gdp, passthrough_featurenames
+import __main__                 
+__main__.ratio_health_gdp = ratio_health_gdp
+__main__.passthrough_featurenames = passthrough_featurenames 
+
+import joblib 
 from load_utils import load_models, load_df, build_sidebar
-
-from utils import ratio_health_gdp
+#import shap
 
 # ----------------------------------
 # LOAD MODELS
@@ -56,6 +60,7 @@ if country_select is not None:
     st.title(f"Simulate :orange[{base_df['Entity'].iloc[0]}'s] U5MR")
     st.markdown(f"""
                 {base_df['Entity'].iloc[0]}'s region as defined by the World Bank: :orange[*{base_df['world_regions_wb'].iloc[0]}*]
+                \nAs of 2018, it is assigned to the :orange[*{base_df['world_income_group'].iloc[5].lower()}*] group.
                 \nTo find out how the under-five mortality rate outcome would have differed under different conditions of socioeconomic and health-related factors,
                 select one or multiple years and adjust given indicators to simulate the under-five mortality rate for {base_df["Entity"].iloc[0]}.""")  
 else:
@@ -100,7 +105,6 @@ if years_select and country_select is not None:
         pred_med  = qr_models["med"].predict(X_original),
         pred_high = qr_models["high"].predict(X_original)
     )
-    
     #predicts_original
     # ----------------------------------
     # Q-MODELS PREDICTIONS WITH NEW DF
@@ -121,6 +125,7 @@ if years_select and country_select is not None:
     #q075_pos = predicts_original["q075_pos"].median()
     bw_med = predicts_original["bandwidth"].median()
     bw_med_pos = predicts_original["bandwidth_pos"].median()
+    
     
     st.markdown(f"##### :orange[{base_df['Entity'].iloc[0]}'s] reference predicted child mortality rate for {' | '.join(map(str, sorted(years_select)))}")
     st.write(f"Based on a global reference, the corresponding quantile prediction specific to {base_df['Entity'].iloc[0]} in comparison to the remaining data is highlighted.")
@@ -174,17 +179,20 @@ if years_select and country_select is not None:
                 
     if highlight_col1 == True:
         st.info(f"""Why is the Q0.25 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is relatively low.
-                \nThe estimated range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is only {bw_med:.2f}. 
+                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is only {bw_med:.2f}. Thus the outcome seems robust. 
                 \nGlobally compared, **{base_df['Entity'].iloc[0]}** is among the {(bw_med_pos * 100):.2f}% with the lowest uncertainty.""")
     if highlight_col2 == True:
         st.warning(f"""Why is the Q0.5 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is moderate.
-                \nThe estimated range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f}. 
+                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f}. 
                 \nGlobally compared, around {(bw_med_pos * 100):.2f}% of the remaining country data samples are below this uncertainty range.""")
     if highlight_col3 == True:
         st.error(f"""Why is the Q0.75 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is relatively high.
-                \nThe estimated range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f}. 
+                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f}. Thus the outcome seems more risky. 
                 \nGlobally compared, **{base_df['Entity'].iloc[0]}** is among the {abs(-((bw_med_pos * 100) - (100-bw_med_pos))):.2f}% with the highest uncertainty.""")
-    #years_df 
+    
+    #st.write(df_ref.loc[df_ref["world_income_group"].isin(years_df["world_income_group"]), "bandwidth_pos"].mean())
+    #df_ref.loc[df_ref["world_income_group"].isin(years_df["world_income_group"])]
+    
     #predicts_original
     st.divider()
     
@@ -234,34 +242,69 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     quant_col1, quant_col2, quant_col3 = st.columns(3, border=True)  
     with quant_col1:
         st.metric(
-            label="*Q 0.25 prediction*", 
+            label="*Q 0.25 prediction* (Best Case)", 
             delta_color="inverse",
             value=f"{predicts_new['pred_low'].median():.2f} per 1000", 
-            delta=f"{predicts_new['pred_low'].median() - predicts_original['pred_low'].median():.2f} per 1000",
+            delta=f"""{predicts_new['pred_low'].median() - predicts_original['pred_low'].median():.2f} per 1000
+                        ({ ((predicts_new['pred_low'].median() - predicts_original['pred_low'].median()) / predicts_original['pred_low'].median() * 100):.2f} %)""",
             chart_data=predicts_new['pred_low'].tolist(),
             chart_type="line",
         )
+        if highlight_col1:
+            with st.container():
+                st.success("Focus Quantile")
     with quant_col2:
         st.metric(
             label="*Q 0.5 (median) prediction*", 
             delta_color="inverse",
             value=f"{predicts_new['pred_med'].median():.2f} per 1000", 
-            delta=f"{predicts_new['pred_med'].median() - predicts_original['pred_med'].median():.2f} per 1000",
+            delta=f"""{predicts_new['pred_med'].median() - predicts_original['pred_med'].median():.2f} per 1000
+                    ({ ((predicts_new['pred_med'].median() - predicts_original['pred_med'].median()) / predicts_original['pred_med'].median() * 100):.2f} %)""",
             chart_data=predicts_new['pred_med'].tolist(),
             chart_type="line",
-        )    
+        )
+        if highlight_col2:
+            with st.container():
+                st.success("Focus Quantile")  
     with quant_col3:
         st.metric(
-            label="*Q 0.75 prediction*", 
+            label="*Q 0.75 prediction* (Worst Case)", 
             delta_color="inverse",
             value=f"{predicts_new['pred_high'].median():.2f} per 1000", 
-            delta=f"{predicts_new['pred_high'].median() - predicts_original['pred_high'].median():.2f} per 1000",
+            delta=f"""{predicts_new['pred_high'].median() - predicts_original['pred_high'].median():.2f} per 1000
+                    ({ ((predicts_new['pred_high'].median() - predicts_original['pred_high'].median()) / predicts_original['pred_high'].median() * 100):.2f} %)""",
             chart_data=predicts_new['pred_high'].tolist(),
             chart_type="line",
         )
+        if highlight_col3:
+            with st.container():
+                st.success("Focus Quantile")
             
             
-    st.divider()      
+    st.space()    
+    df_preds = pd.DataFrame({
+    "base_q025": predicts_original["pred_low"],
+    "whatif_q025": predicts_new["pred_low"],
+    "base_q05": predicts_original["pred_med"],
+    "whatif_q05": predicts_new["pred_med"],
+    "base_q075": predicts_original["pred_high"],
+    "whatif_q075": predicts_new["pred_high"],
+    "base_year": predicts_original["Year"],
+    "whatif_year": predicts_new["Year"]
+    })    
+    col1, col2, col3 = st.columns([1, 5, 1])
+    with col2:
+            fig, ax = plt.subplots(figsize=(12, 6))
+            sns.lineplot(data=df_preds, x="base_year", y="base_q05", label="base median prediction", linewidth=3)
+            sns.lineplot(data=df_preds, x="whatif_year", y="whatif_q05", label="simulated median prediction", linewidth=3)
+            ax.fill_between(df_preds["base_year"], df_preds["base_q025"], df_preds["base_q075"], alpha=0.25)
+            ax.fill_between(df_preds["whatif_year"], df_preds["whatif_q025"], df_preds["whatif_q075"], alpha=0.25)
+            ax.set_ylabel("U5MR per 1000 live births")
+            ax.set_xlabel("Year")
+            ax.set_title(f"Reference vs. Simulated U5MR Prediction For {base_df['Entity'].iloc[0]}")
+            st.pyplot(fig)
+    
+    st.divider()    
     st.info(f"ORIGINAL PRED (25%, 50%, 75%): "
         f"{predicts_original['pred_low'].median():.2f}, {predicts_original['pred_med'].median():.2f}, {predicts_original['pred_high'].median():.2f}")
     st.info(f"NEW PRED (25%, 50%, 75%): "
