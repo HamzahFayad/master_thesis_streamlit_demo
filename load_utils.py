@@ -1,8 +1,13 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 import joblib
+import shap
 
-
+# ----------------------------------
+# MODELS 
+#----------------------------------- 
 @st.cache_resource
 def load_models():
     return {
@@ -10,13 +15,19 @@ def load_models():
         "med": joblib.load("model/quantile_05.pkl"),   
         "high": joblib.load("model/quantile_075.pkl")
     } 
-      
+# ----------------------------------
+# REFERENCE DATASET 
+#-----------------------------------     
 @st.cache_data
 def load_df():
     df = pd.read_csv("reference_data/base_df.csv")
     return df
  
  
+
+# ----------------------------------
+# SIDEBAR WITH FEATURE ADJUSTMENTS 
+#----------------------------------- 
 slider_vars = {
     "ahec": 0,
     "gdp": 0, 
@@ -28,7 +39,6 @@ slider_vars = {
     "water": 0,
     "school": 0    
 }
-
 def build_sidebar(years_df, years_select, country_select):
     with st.sidebar:
         if years_select and country_select is not None:
@@ -158,7 +168,8 @@ def build_sidebar(years_df, years_select, country_select):
             #Share without improved water 
             slider_vars["water"] = st.slider(
             "Decrease :orange[*share of population without improved water*]",
-            min_value=-float(years_df['share_without_improved_water'].min()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
+            #min_value=-float(years_df['share_without_improved_water'].min()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
+            min_value=-float(years_df['share_without_improved_water'].median()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
             max_value=0.0,
             value=0.0,
             step=0.5,
@@ -196,3 +207,104 @@ def build_sidebar(years_df, years_select, country_select):
         
     return slider_vars
  
+
+# ----------------------------------
+# SHAP SUMMARY PLOT 
+#----------------------------------- 
+def rename_features(feature_names):
+    rename_features = {
+    "nurses_and_midwives_per_1000_people": "nurses/midwives per 1000",
+    "physicians_per_1000_people": "physicians per 1000",
+    "prevalence_of_undernourishment": "prevalence of undernourishment",
+    "share_of_population_urban": "share of population urban",
+    "share_without_improved_water": "share without improved water", 
+    "vaccination_coverage_who_unicef": "vaccination coverage",
+    "years_of_schooling": "years of schooling"       
+    }
+    prefix = ["world_regions_wb_", "world_income_group_"]
+    
+    new_feture_names = []
+    for n in feature_names:
+        for p in prefix:
+            n = n.removeprefix(p)
+        final_name = rename_features.get(n, n)
+        new_feture_names.append(final_name)
+        
+    return new_feture_names
+
+@st.cache_data
+def setup_shap(_model, _data):
+    return shap.LinearExplainer(_model, _data)
+
+def shap_plot(qr_models, X, quant, title):
+    inner_pipeline = qr_models[quant].regressor_
+    preprocessor = inner_pipeline.named_steps["preprocess"]
+    model = inner_pipeline.named_steps["model"]
+
+    X_transformed = preprocessor.transform(X) 
+    #X_transformed = np.exp(X_transformed)
+    feature_names = preprocessor.get_feature_names_out()
+    
+    new_feature_names = rename_features(feature_names)
+
+    expl = setup_shap(model, X_transformed)
+    shapvals = expl(X_transformed)
+    shapvals.feature_names = list(new_feature_names)
+    
+    col1, col2, col3 = st.columns([1, 10, 1])
+    with col2:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        #shap.plots.bar(shapvals.abs.sum(0))
+        shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, plot_size=[12,6], show=False)
+        #shap.plots.waterfall(shapvals[4])
+        plt.title(f"Feature Impact on the Prediction: {title}")
+        st.pyplot(fig)
+        plt.clf()
+        plt.close()
+      
+
+def shap_decision_plot(qr_models, X, quant, title):
+    inner_pipeline = qr_models[quant].regressor_
+    preprocessor = inner_pipeline.named_steps["preprocess"]
+    model = inner_pipeline.named_steps["model"]
+
+    X_transformed = preprocessor.transform(X) 
+    feature_names = preprocessor.get_feature_names_out()
+    
+    new_feature_names = rename_features(feature_names)
+
+    expl = setup_shap(model, X_transformed)
+    shapvals = expl(X_transformed)    
+    shapvals.feature_names = list(new_feature_names)
+    
+    """exp = shap.Explanation(
+        values=shapvals.values[0].reshape(1, -1),
+        base_values=shapvals.base_values[0],
+        data=X_transformed[0].reshape(1, -1), 
+        feature_names=new_feature_names
+    )"""
+
+    col1, col2, col3 = st.columns([1, 10, 1])
+    with col2:
+        #shap.initjs()
+        fig, ax = plt.subplots(figsize=(12, 6))
+        shap.plots.waterfall(shapvals[0], max_display=10, show=False)
+        
+        for ax in fig.axes:
+            ax.set_xlabel("") 
+            ax.set_xticks([])
+            for text in ax.texts:
+                t = text.get_text()
+                if "=" in t:
+                    new_text = t.split("=")[-1].strip()
+                    text.set_text(new_text)
+                if "f(x)" in t or "E[f(x)]" in t:
+                    text.set_text("")
+
+        ax.set_yticklabels([label.get_text().split('=')[-1].strip() if '=' in label.get_text() else label.get_text() for label in ax.get_yticklabels()])
+        #shap.plots.scatter(shapvals[:, "share without improved water"], color=shapvals[:, 0], ax=ax, show=False)
+        #st.pyplot(fig)
+        #plt.title(f"Feature Impact on the Prediction: {title}")
+        st.pyplot(fig)
+        plt.clf()
+        plt.close()
