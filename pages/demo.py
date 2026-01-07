@@ -6,7 +6,6 @@ from matplotlib.ticker import MaxNLocator
 plt.style.use('ggplot')
 import seaborn as sns
 import shap
-
 st.set_page_config(layout="wide")
 
 from utils import ratio_health_gdp, passthrough_featurenames
@@ -15,13 +14,14 @@ __main__.ratio_health_gdp = ratio_health_gdp
 __main__.passthrough_featurenames = passthrough_featurenames 
 
 import joblib 
-from load_utils import load_models, load_df, build_sidebar, shap_plot, shap_decision_plot
+from load_utils import load_models, load_df, build_sidebar, shap_plot, shap_decision_plot, force_plot, dependance_plot
 
 # ----------------------------------
 # LOAD MODELS
 #-----------------------------------
 qr_models = load_models()
 
+# shifts to correct "Coverage"
 SHIFT = {
     "q25": -0.3824,
     "q50": -0.6396,
@@ -60,7 +60,7 @@ years_select = st.sidebar.multiselect(
     placeholder="Available Years",
     on_change=reset_button
 )
-years_df = base_df[base_df["Year"].isin(years_select)].copy()
+years_df = base_df[base_df["Year"].isin(years_select)].copy() 
 
 # ----------------------------------
 # SIMULATOR INTRO
@@ -71,11 +71,12 @@ if country_select is not None:
                 {base_df['Entity'].iloc[0]}'s region as defined by the World Bank: :orange[*{base_df['world_regions_wb'].iloc[0]}*]
                 \nAs of 2018, it is assigned to the :orange[*{base_df['world_income_group'].iloc[5].lower()}*] group.
                 \nTo find out how the under-five mortality rate outcome would have differed under different conditions of socioeconomic and health-related factors,
-                select one or multiple years and adjust given indicators to simulate the under-five mortality rate for {base_df["Entity"].iloc[0]}.""")  
+                select one or multiple years and adjust given indicators to simulate the under-five mortality rate for {base_df["Entity"].iloc[0]}.
+                \nKeep in mind that for each country, only a period of six years was used to train the ML model due to the importance of a high data quality.""")  
 else:
     st.title("Simulator")
     st.markdown("#### :orange['What-if'] prediction of under-five mortality rate at country level")
-    st.markdown("Hypothetical scenarios")  
+    st.markdown("*Hypothetical scenarios:* Understand how the indicators affect the U5MR predictions")  
     
 # ----------------------------------
 # NEW CHANGES DF TO PREDICT WITH
@@ -85,11 +86,11 @@ modified_df = years_df.copy()
 # ----------------------------------
 # SIDEBAR TO ADJUST INDICATORS
 #-----------------------------------
-indicators = build_sidebar(years_df, years_select, country_select)
+with st.sidebar:
+    indicators = build_sidebar(years_df, years_select, country_select)
 
 
 if years_select and country_select is not None:
-    
     # ----------------------------------
     # NEW CHANGED DF FOR PREDICTION
     #-----------------------------------
@@ -104,7 +105,6 @@ if years_select and country_select is not None:
         vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + indicators["vaccination"],
         years_of_schooling = lambda x: x['years_of_schooling'] + indicators["school"]
     )  
-    
     # ----------------------------------
     # Q-MODELS PREDICTIONS WITH ORIGINAL DF
     #----------------------------------- 
@@ -117,7 +117,6 @@ if years_select and country_select is not None:
         #pred_med  = qr_models["med"].predict(X_original),
         #pred_high = qr_models["high"].predict(X_original)
     )
-    #predicts_original
     # ----------------------------------
     # Q-MODELS PREDICTIONS WITH NEW DF
     #----------------------------------- 
@@ -126,8 +125,7 @@ if years_select and country_select is not None:
         pred_low  = qr_models["low"].predict(X_new) + SHIFT["q25"],
         pred_med  = qr_models["med"].predict(X_new) + SHIFT["q50"],
         pred_high = qr_models["high"].predict(X_new) + SHIFT["q75"]
-    )
-        
+    ) 
     st.divider()
     # ----------------------------------
     # SHOW REFERENCE Q-MODELS PREDICTIONS 
@@ -204,35 +202,58 @@ if years_select and country_select is not None:
     #df_ref.loc[df_ref["world_income_group"].isin(years_df["world_income_group"])]
     
     #st.write(f"Table of indicator values for **{base_df['Entity'].iloc[0]}**")
+    #X_original
+    #predicts_original["pred_high"]
+    #X_new
+    #df_ref
     X_original
+    #hit_rate = (df_ref['child_mortality_igme'] <= df_ref['pred_q075']).mean()
+    #st.write(hit_rate)
+    #st.write(f"How the features affect the prediction for {X_original['world_regions_wb'].iloc[0]} countries including **{base_df['Entity'].iloc[0]}**")
+    #shap_by_region = df_ref.loc[df_ref["world_regions_wb"].isin(X_original["world_regions_wb"])]#df_ref.copy()
+    #st.write(f"How the features affect the predictions globally for all countries including **{base_df['Entity'].iloc[0]}**")
+    
     st.space()
-    st.write(f"How the features affect the prediction for {X_original['world_regions_wb'].iloc[0]} countries including **{base_df['Entity'].iloc[0]}**")
+    global_beeswarm = f":orange[How the features affect the predictions globally for all countries including **{base_df['Entity'].iloc[0]}**]"
+    local_waterfall = f":orange[How the features affect the prediction for one year data sample of **{base_df['Entity'].iloc[0]}**]"
     shap_by_region = df_ref.copy()
+    
+    choice_years = years_df["Year"].tolist()
+    choice_year_label = "Choose year to view the specific local features' influence on the prediction"
+    
     if focus_quant_025:
+        st.write(global_beeswarm)
         shap_plot(qr_models, shap_by_region, "low", "Focus Quantile 0.25")
-        shap_decision_plot(qr_models, X_original, "low", "Focus Quantile 0.25")
-    elif focus_quant_05:
-        shap_plot(qr_models, shap_by_region, "med", "Focus Quantile 0.5")
-        shap_decision_plot(qr_models, X_original, "med", "Focus Quantile 0.5")
-    else:
-        shap_plot(qr_models, shap_by_region, "high", "Focus Quantile 0.75")
-        shap_decision_plot(qr_models, X_original, "high", "Focus Quantile 0.75")
-    st.divider()   
-    #u5mr_mean = years_df['child_mortality_igme'].mean()
-    #u5mr_median = years_df['child_mortality_igme'].median()
-    #u5mr_min = years_df['child_mortality_igme'].min()
-    #u5mr_max = years_df['child_mortality_igme'].max()
-    #st.write(f":orange[{base_df['Entity'].iloc[0]}'s] actual observed child mortality rate for {' | '.join(map(str, sorted(years_select)))}")
-    #st.write(f"Mean: {u5mr_mean:.2f}")
-    #st.write(f"Median: {u5mr_median:.2f}")
-    #if len(years_select) > 1:
-    #    st.write(f"Ranges from {u5mr_min:.2f} - {u5mr_max:.2f}")
         
-    #st.write("Modified")
-    #modified_df
+        st.space()
+
+        st.write(local_waterfall)
+        
+        year_choice_orig1 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig1")
+        #year_choice_orig1 = st.number_input("Choose...", label_visibility="collapsed", min_value=0, max_value=len(X_original)-1, value=0, width=150, key="year_choice_orig1")
+        shap_decision_plot(qr_models, X_original, "low", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.25)", predicts_original["pred_low"], choice_years.index(year_choice_orig1))
+        #force_plot(qr_models, X_original, "low", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.25)")  
     
-    
-    
+    elif focus_quant_05:
+        st.write(global_beeswarm)
+        shap_plot(qr_models, shap_by_region, "med", "Focus Quantile 0.5")
+        
+        st.space()
+
+        st.write(local_waterfall)
+        year_choice_orig2 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig2")
+        shap_decision_plot(qr_models, X_original, "med", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.5)", predicts_original["pred_med"], choice_years.index(year_choice_orig2))
+
+    else:
+        st.write(global_beeswarm)
+        shap_plot(qr_models, shap_by_region, "high", "Focus Quantile 0.75")
+        
+        st.space()
+        
+        st.write(local_waterfall)
+        year_choice_orig3 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig3")
+        shap_decision_plot(qr_models, X_original, "high", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.75)", predicts_original["pred_high"], choice_years.index(year_choice_orig3))   
+    st.divider()       
     
     
 
@@ -298,15 +319,25 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             with st.container():
                 st.success("Focus Quantile")
                 
-    if(len(years_df) > 1):
-        st.space() 
-        st.markdown(f"###### How the adjusted features affect the new prediction") 
-        if focus_quant_025:
-            shap_decision_plot(qr_models, X_new, "low", "Focus Quantile 0.25")
-        elif focus_quant_05:
-            shap_decision_plot(qr_models, X_new, "med", "Focus Quantile 0.5")
-        else:
-            shap_decision_plot(qr_models, X_new, "high", "Focus Quantile 0.75")
+    st.space() 
+    st.markdown(f"###### :orange[How the adjusted features affect the new prediction]") 
+    #choice_years = years_df["Year"].tolist()
+    #choice_year_label = "Choose which year to view the specific local features' influence on the prediction"
+    if focus_quant_025:
+        year_choice_new1 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_new1")
+        #year_choice_new1 = st.number_input("Choose...", label_visibility="collapsed", min_value=0, max_value=len(X_new)-1, value=0, width=150, key="year_choice_new1")
+        shap_decision_plot(qr_models, X_new, "low", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.25)", predicts_new["pred_low"], choice_years.index(year_choice_new1))
+        #shap_decision_plot(qr_models, X_new, "low", "Focus Quantile 0.25")
+    elif focus_quant_05:
+        year_choice_new2 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_new2")
+        #year_choice_new2 = st.number_input("Choose...", label_visibility="collapsed", min_value=0, max_value=len(X_new)-1, value=0, width=150, key="year_choice_new2")
+        shap_decision_plot(qr_models, X_new, "med", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.5)", predicts_new["pred_med"], choice_years.index(year_choice_new2))
+        #shap_decision_plot(qr_models, X_new, "med", "Focus Quantile 0.5")
+    else:
+        year_choice_new3 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_new3")
+        #year_choice_new3 = st.number_input("Choose...", label_visibility="collapsed", min_value=0, max_value=len(X_new)-1, value=0, width=150, key="year_choice_new3")
+        shap_decision_plot(qr_models, X_new, "high", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.75)", predicts_new["pred_high"], choice_years.index(year_choice_new3))
+        #shap_decision_plot(qr_models, X_new, "high", "Focus Quantile 0.75")
             
             
     st.space()    

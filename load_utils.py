@@ -39,187 +39,192 @@ slider_vars = {
     "water": 0,
     "school": 0    
 }
+
+@st.fragment
 def build_sidebar(years_df, years_select, country_select):
-    with st.sidebar:
-        if years_select and country_select is not None:
-            st.divider()
-            st.subheader(f"Adjust indicators to simulate hypothetical scenarios of child mortality rate in: :orange[*{country_select}*] \u2193")
-            st.markdown('<h5 style="font-weight: 400;"><em>(changes affect all selected years)</em></h5>', unsafe_allow_html=True)
-            st.space()
+    if years_select and country_select is not None:
+        st.divider()
+        st.subheader(f"Adjust indicators to simulate hypothetical scenarios of child mortality rate in: :orange[*{country_select}*] \u2193")
+        st.markdown('<h5 style="font-weight: 400;"><em>(changes affect all selected years)</em></h5>', unsafe_allow_html=True)
+        st.space()
             
-            #-------------------------------------------------
-            st.markdown("#### Economic Performance & Welfare:")
+        #-------------------------------------------------
+        st.markdown("#### Economic Performance & Welfare:")
 
-            #Annual Healthcare Exp. per capita
-            slider_vars["ahec"] = st.slider(
-            "Increase :orange[*annual health spending per capita*]",
+        #Annual Healthcare Exp. per capita
+        slider_vars["ahec"] = st.slider(
+        "Increase :orange[*annual health spending per capita*]",
             min_value=0.0,
-            max_value=100.0,
-            value=0.0,
-            step=1.0,
-            format="%.1f%%",
-            help="The sum of public and private annual health expenditure per person. This data is adjusted for differences in living costs between countries, but it is not adjusted for inflation."
-            )
-            st.caption(
-            f"~ {(years_df['annual_healthcare_expenditure_per_capita'].median() * (1 + slider_vars['ahec'] / 100)):.2f} int. $"
-            )
-            st.space()
+        max_value=100.0,
+        value=0.0,
+        step=1.0,
+        format="%.1f%%",
+        help="The sum of public and private annual health expenditure per person. This data is adjusted for differences in living costs between countries, but it is not adjusted for inflation."
+        )
+        st.caption(
+        f"~ {(years_df['annual_healthcare_expenditure_per_capita'].median() * (1 + slider_vars['ahec'] / 100)):.2f} int. $"
+        )
+        st.space()
             
-            #GDP per capita
-            slider_vars["gdp"] = st.slider(
-            "Increase :orange[*gross domestic product (GDP) per capita*]",
-            min_value=0.0,
-            max_value=100.0,
-            value=0.0,
-            step=1.0,
-            format="%.1f%%",
-            help="Average economic output per person in a country or region per year. This data is adjusted for inflation and differences in living costs between countries."
-            )
-            st.caption(
-            f"~ {(years_df['gdp_per_capita_worldbank'].median() * (1 + slider_vars['gdp'] / 100)):.2f} int. $, PPP"
-            )  
-            st.space()
+        #GDP per capita
+        slider_vars["gdp"] = st.slider(
+        "Increase :orange[*gross domestic product (GDP) per capita*]",
+        min_value=0.0,
+        max_value=100.0,
+        value=0.0,
+        step=1.0,
+        format="%.1f%%",
+        help="Average economic output per person in a country or region per year. This data is adjusted for inflation and differences in living costs between countries."
+        )
+        st.caption(
+        f"~ {(years_df['gdp_per_capita_worldbank'].median() * (1 + slider_vars['gdp'] / 100)):.2f} int. $, PPP"
+        )  
+        st.space()
             
-            #-------------------------------------------------
-            st.markdown("#### Medical Health:")
+        #-------------------------------------------------
+        st.markdown("#### Medical Health:")
         
-            #Nurses & midwives per 1000
-            slider_vars["nm"] = st.slider(
-            "Increase :orange[*nurses/midwives per 1000 people*]",
-            min_value=0.0,
-            max_value=100.0,
-            value=0.0,
-            step=0.5,
-            format="%.1f%%",
-            help="Nurses and midwives include professional nurses, professional midwives, auxiliary nurses & midwives, enrolled nurses & midwives and other associated personnel."
-            )
-            st.caption(
-            f"~ {(years_df['nurses_and_midwives_per_1000_people'].median() * (1 + slider_vars['nm'] / 100)):.2f} per 1000"
-            )
-            st.space()
+        #Nurses & midwives per 1000
+        slider_vars["nm"] = st.slider(
+        "Increase :orange[*nurses/midwives per 1000 people*]",
+        min_value=0.0,
+        max_value=100.0,
+        value=0.0,
+        step=0.5,
+        format="%.1f%%",
+        help="Nurses and midwives include professional nurses, professional midwives, auxiliary nurses & midwives, enrolled nurses & midwives and other associated personnel."
+        )
+        st.caption(
+        f"~ {(years_df['nurses_and_midwives_per_1000_people'].median() * (1 + slider_vars['nm'] / 100)):.2f} per 1000"
+        )
+        st.space()
             
-            #Physicians per 1000
-            slider_vars["phys"] = st.slider(
-            "Increase :orange[*physicians per 1000 people*]",
-            min_value=0.0,
-            max_value=100.0,
-            value=0.0,
-            step=0.5,
-            format="%.1f%%",
-            help="Physicians include generalist and specialist medical practitioners."
-            )
-            st.caption(
-            f"~ {(years_df['physicians_per_1000_people'].median() * (1 + slider_vars['phys'] / 100)):.2f} per 1000"
-            )
-            st.space()
+        #Physicians per 1000
+        slider_vars["phys"] = st.slider(
+        "Increase :orange[*physicians per 1000 people*]",
+        min_value=0.0,
+        max_value=100.0,
+        value=0.0,
+        step=0.5,
+        format="%.1f%%",
+        help="Physicians include generalist and specialist medical practitioners."
+        )
+        st.caption(
+        f"~ {(years_df['physicians_per_1000_people'].median() * (1 + slider_vars['phys'] / 100)):.2f} per 1000"
+        )
+        st.space()
             
-            #vaccination coverage 
-            slider_vars["vaccination"] = st.slider(
-            "Increase :orange[*vaccination coverage*]",
-            min_value=0.0,
-            max_value=100 - float(years_df["vaccination_coverage_who_unicef"].max()),
-            value=0.0,
-            step=0.5,
-            format="%.1f%%",
-            help="Share of one-year-olds who have had three doses of the combined diphtheria, tetanus and pertussis vaccine in a given year."
-            )
-            st.caption(
-            f"~ {( min(100.0, years_df['vaccination_coverage_who_unicef'].median() + slider_vars['vaccination']) ):.2f} %"
-            )
-            st.space()
+        #vaccination coverage 
+        slider_vars["vaccination"] = st.slider(
+        "Increase :orange[*vaccination coverage*]",
+        min_value=0.0,
+        max_value=100 - float(years_df["vaccination_coverage_who_unicef"].max()),
+        value=0.0,
+        step=0.5,
+        format="%.1f%%",
+        help="Share of one-year-olds who have had three doses of the combined diphtheria, tetanus and pertussis vaccine in a given year."
+        )
+        st.caption(
+        f"~ {( min(100.0, years_df['vaccination_coverage_who_unicef'].median() + slider_vars['vaccination']) ):.2f} %"
+        )
+        st.space()
             
-            #-------------------------------------------------
-            st.markdown("#### Living Standards:")
+        #-------------------------------------------------
+        st.markdown("#### Living Standards:")
             
-            #Share of population urban 
-            slider_vars["urban"] = st.slider(
-            "Increase :orange[*share of population urban*]",
-            min_value=0.0,
-            max_value=100 - float(years_df["share_of_population_urban"].max()) if not years_df['share_of_population_urban'].median() >= 100.0 else 0.5,
-            #max_value=float(100.0 / years_df["share_of_population_urban"].median() -1) * 100, #50.0,
-            value=0.0,
-            step=0.5,
-            format="%.1f%%",
-            disabled=years_df['share_of_population_urban'].median() >= 100.0,
-            help="Share of the population living in urban areas."
-            )
-            st.caption(
-            f"~ {( min(100.0, years_df['share_of_population_urban'].median() + slider_vars['urban']) ):.2f} %"
-            )
-            st.space()
+        #Share of population urban 
+        slider_vars["urban"] = st.slider(
+        "Increase :orange[*share of population urban*]",
+        min_value=0.0,
+        max_value=100 - float(years_df["share_of_population_urban"].max()) if not years_df['share_of_population_urban'].median() >= 100.0 else 0.5,
+        #max_value=float(100.0 / years_df["share_of_population_urban"].median() -1) * 100, #50.0,
+        value=0.0,
+        step=0.5,
+        format="%.1f%%",
+        disabled=years_df['share_of_population_urban'].median() >= 100.0,
+        help="Share of the population living in urban areas."
+        )
+        st.caption(
+        f"~ {( min(100.0, years_df['share_of_population_urban'].median() + slider_vars['urban']) ):.2f} %"
+        )
+        st.space()
             
-            #Prevalence of undernourishment
-            slider_vars["undernourishment"] = st.slider(
-            "Decrease :orange[*prevalence of undernourishment*]",
-            #min_value=-100.0,
-            min_value=-float(years_df['prevalence_of_undernourishment'].min()),
-            max_value=0.0,
-            value=0.0,
-            step=0.5,
-            disabled=years_df['prevalence_of_undernourishment'].median() <= 0.1,
-            format="%.1f%%",
-            help="Share of the population whose daily food intake does not provide enough energy to maintain a normal, active, and healthy life."
-            )
-            st.caption(
-            f"~ {(years_df['prevalence_of_undernourishment'].median() + slider_vars['undernourishment']):.2f} %"
-            )
-            st.space()
+        #Prevalence of undernourishment
+        slider_vars["undernourishment"] = st.slider(
+        "Decrease :orange[*prevalence of undernourishment*]",
+        #min_value=-100.0,
+        min_value=-float(years_df['prevalence_of_undernourishment'].min()),
+        max_value=0.0,
+        value=0.0,
+        step=0.5,
+        disabled=years_df['prevalence_of_undernourishment'].median() <= 0.1,
+        format="%.1f%%",
+        help="Share of the population whose daily food intake does not provide enough energy to maintain a normal, active, and healthy life."
+        )
+        st.caption(
+        f"~ {(years_df['prevalence_of_undernourishment'].median() + slider_vars['undernourishment']):.2f} %"
+        )
+        st.space()
 
-            #Share without improved water 
-            slider_vars["water"] = st.slider(
-            "Decrease :orange[*share of population without improved water*]",
-            #min_value=-float(years_df['share_without_improved_water'].min()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
-            min_value=-float(years_df['share_without_improved_water'].median()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
-            max_value=0.0,
-            value=0.0,
-            step=0.5,
-            disabled=years_df['share_without_improved_water'].median() <= 0.1,
-            format="%.1f%%",
-            help="Improved drinking water sources are those that have the potential to deliver safe water by nature of their design and construction, and include: piped water, boreholes or tubewells, protected dug wells, protected springs, rainwater, and packaged or delivered water."
-            )
-            st.caption(
-            f"~ {( years_df['share_without_improved_water'].median() + slider_vars['water'] ):.2f} %"
-            )
-            st.space()
+        #Share without improved water 
+        slider_vars["water"] = st.slider(
+        "Decrease :orange[*share of population without improved water*]",
+        #min_value=-float(years_df['share_without_improved_water'].min()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
+        min_value=-float(years_df['share_without_improved_water'].median()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
+        max_value=0.0,
+        value=0.0,
+        step=0.5,
+        disabled=years_df['share_without_improved_water'].median() <= 0.1,
+        format="%.1f%%",
+        help="Improved drinking water sources are those that have the potential to deliver safe water by nature of their design and construction, and include: piped water, boreholes or tubewells, protected dug wells, protected springs, rainwater, and packaged or delivered water."
+        )
+        st.caption(
+        f"~ {( years_df['share_without_improved_water'].median() + slider_vars['water'] ):.2f} %"
+        )
+        st.space()
             
-            #-------------------------------------------------
-            st.markdown("#### Education:")
+        #-------------------------------------------------
+        st.markdown("#### Education:")
             
-            #years of schooling 
-            slider_vars["school"] = st.slider(
-            "Increase :orange[*years of schooling*]",
-            min_value=0.0,
-            max_value=float(max(0.0, 14.0 - years_df['years_of_schooling'].median())) if not years_df['years_of_schooling'].median() > 14.0 else 0.5,
-            value=0.0,
-            step=0.5,
-            disabled=years_df['years_of_schooling'].median() > 14.0,
-            format="%.1f years",
-            help="Average number of years women aged 25 and older have spent in formal education."
-            )
-            st.caption(
-            f"~ {( years_df['years_of_schooling'].median() + slider_vars['school']):.1f} school years"
-            )
-            st.space()
+        #years of schooling 
+        slider_vars["school"] = st.slider(
+        "Increase :orange[*years of schooling*]",
+        min_value=0.0,
+        max_value=float(max(0.0, 14.0 - years_df['years_of_schooling'].median())) if not years_df['years_of_schooling'].median() > 14.0 else 0.5,
+        value=0.0,
+        step=0.5,
+        disabled=years_df['years_of_schooling'].median() > 14.0,
+        format="%.1f years",
+        help="Average number of years women aged 25 and older have spent in formal education."
+        )
+        st.caption(
+        f"~ {( years_df['years_of_schooling'].median() + slider_vars['school']):.1f} school years"
+        )
+        st.space()
             
-            st.divider()
-            if st.button("Simulate", type="primary"):
-                st.session_state.simulate_btn = True
+        st.divider()
+        if st.button("Simulate", type="primary"):
+            st.session_state.simulate_btn = True
+            st.rerun()
         
     return slider_vars
  
 
 # ----------------------------------
-# SHAP SUMMARY PLOT 
+# FEATURES FOR ORIGINAL VALUES 
 #----------------------------------- 
 def rename_features(feature_names):
     rename_features = {
-    "nurses_and_midwives_per_1000_people": "nurses/midwives per 1000",
-    "physicians_per_1000_people": "physicians per 1000",
-    "prevalence_of_undernourishment": "prevalence of undernourishment",
-    "share_of_population_urban": "share of population urban",
-    "share_without_improved_water": "share without improved water", 
-    "vaccination_coverage_who_unicef": "vaccination coverage",
-    "years_of_schooling": "years of schooling"       
+    "annual_healthcare_expenditure_per_capita": "annual_healthcare_expenditure_per_capita",
+    "gdp_per_capita_worldbank": "gdp_per_capita_worldbank",
+    "healthspending_gdp_ratio": "healthspending_gdp_ratio",
+    "nurses_and_midwives_per_1000_people": "nurses_and_midwives_per_1000_people",
+    "physicians_per_1000_people": "physicians_per_1000_people",
+    "prevalence_of_undernourishment": "prevalence_of_undernourishment",
+    "share_of_population_urban": "share_of_population_urban",
+    "share_without_improved_water": "share_without_improved_water", 
+    "vaccination_coverage_who_unicef": "vaccination_coverage_who_unicef",
+    "years_of_schooling": "years_of_schooling"       
     }
     prefix = ["world_regions_wb_", "world_income_group_"]
     
@@ -232,79 +237,154 @@ def rename_features(feature_names):
         
     return new_feture_names
 
-@st.cache_data
+# ----------------------------------
+# CREATE SHAP EXPLAINER
+#----------------------------------- 
+@st.cache_resource
 def setup_shap(_model, _data):
     return shap.LinearExplainer(_model, _data)
 
-def shap_plot(qr_models, X, quant, title):
+# ----------------------------------
+# GENERATE SHAP VALUES BY FEATURES
+# + FEATURE NAMES LIST
+#----------------------------------- 
+def create_shap_by_models(qr_models, X, quant):
     inner_pipeline = qr_models[quant].regressor_
     preprocessor = inner_pipeline.named_steps["preprocess"]
     model = inner_pipeline.named_steps["model"]
 
     X_transformed = preprocessor.transform(X) 
-    #X_transformed = np.exp(X_transformed)
-    feature_names = preprocessor.get_feature_names_out()
-    
+    feature_names = preprocessor.get_feature_names_out() 
     new_feature_names = rename_features(feature_names)
-
+    
     expl = setup_shap(model, X_transformed)
-    shapvals = expl(X_transformed)
+    shapvals = expl(X_transformed)    
     shapvals.feature_names = list(new_feature_names)
+        
+    #bv_expanded = shapvals.base_values[:, None]
+    #shapvals.values = np.expm1(shapvals.values + bv_expanded) - np.expm1(bv_expanded)
+    #shapvals.base_values = np.expm1(shapvals.base_values)
+    
+    return X_transformed, new_feature_names, shapvals
+
+# ----------------------------------
+# GLOBAL BEESWARM SHAP PLOT
+#----------------------------------- 
+def shap_plot(qr_models, X, quant, title):
+    
+    X_transformed, new_feature_names, shapvals = create_shap_by_models(qr_models, X, quant)
     
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
         fig, ax = plt.subplots(figsize=(12, 6))
         #shap.plots.bar(shapvals.abs.sum(0))
-        shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, plot_size=[12,6], show=False)
         #shap.plots.waterfall(shapvals[4])
-        plt.title(f"Feature Impact on the Prediction: {title}")
+        shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, 
+                          plot_size=[12,6], show=False)
+        plt.title(f"Features Impact on the Prediction: {title}")
         st.pyplot(fig)
         plt.clf()
         plt.close()
-      
 
-def shap_decision_plot(qr_models, X, quant, title):
-    inner_pipeline = qr_models[quant].regressor_
-    preprocessor = inner_pipeline.named_steps["preprocess"]
-    model = inner_pipeline.named_steps["model"]
-
-    X_transformed = preprocessor.transform(X) 
-    feature_names = preprocessor.get_feature_names_out()
+# ----------------------------------
+# LOCAL WATERFALL SHAP PLOT
+#-----------------------------------       
+def shap_decision_plot(qr_models, X, quant, title, prediction, id):
     
-    new_feature_names = rename_features(feature_names)
-
-    expl = setup_shap(model, X_transformed)
-    shapvals = expl(X_transformed)    
-    shapvals.feature_names = list(new_feature_names)
-    
-    """exp = shap.Explanation(
-        values=shapvals.values[0].reshape(1, -1),
-        base_values=shapvals.base_values[0],
-        data=X_transformed[0].reshape(1, -1), 
-        feature_names=new_feature_names
-    )"""
+    X_transformed, new_feature_names, shapvals = create_shap_by_models(qr_models, X, quant)
 
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
         #shap.initjs()
         fig, ax = plt.subplots(figsize=(12, 6))
-        shap.plots.waterfall(shapvals[0], max_display=10, show=False)
-        
+        shap.plots.waterfall(shapvals[id], max_display=15, show=False)
+         
         for ax in fig.axes:
-            ax.set_xlabel("") 
+            ax.set_xlabel("")  
             ax.set_xticks([])
-            for text in ax.texts:
-                t = text.get_text()
-                if "=" in t:
-                    new_text = t.split("=")[-1].strip()
-                    text.set_text(new_text)
-                if "f(x)" in t or "E[f(x)]" in t:
-                    text.set_text("")
+        ax.set_xlabel(f"f(x) = {prediction.iloc[id]:.2f}")
+        
+        row_idx = id
+        orig_row = X.iloc[row_idx]
+        new_labels = []
+        current_yticklabels = ax.get_yticklabels()
 
-        ax.set_yticklabels([label.get_text().split('=')[-1].strip() if '=' in label.get_text() else label.get_text() for label in ax.get_yticklabels()])
-        #shap.plots.scatter(shapvals[:, "share without improved water"], color=shapvals[:, 0], ax=ax, show=False)
-        #st.pyplot(fig)
-        #plt.title(f"Feature Impact on the Prediction: {title}")
+        for label in current_yticklabels:
+            text = label.get_text()  
+            if '=' in text and "healthspending_gdp_ratio" in text:
+                ratio_name = "healthspending_gdp_ratio"
+                ratio = orig_row["annual_healthcare_expenditure_per_capita"] / orig_row["gdp_per_capita_worldbank"]
+                formatted_ratio = f"{ratio:,.2f}"
+                new_labels.append(f"{formatted_ratio} = {ratio_name}") 
+            elif '=' in text:
+                txt_parts = text.split('=')
+                name_part = txt_parts[-1].strip()         
+                clean_name = name_part.split('__')[-1]
+                
+                if clean_name in orig_row:
+                    real_value = orig_row[clean_name]
+                    
+                    if isinstance(real_value, (int, float)):
+                        formatted_val = f"{real_value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        if formatted_val.endswith(",00"):
+                            formatted_val = formatted_val[:-3]
+                    else:
+                        formatted_val = str(real_value)
+
+                    new_labels.append(f"{formatted_val} = {clean_name}")
+                else:
+                    new_labels.append(text)
+            else:
+                new_labels.append(text)
+
+        ax.set_yticklabels(new_labels)
+        #ax.set_yticklabels([label.get_text().split('=')[-1].strip() if '=' in label.get_text() else label.get_text() for label in ax.get_yticklabels()])
+        plt.title(f"Features Impact on one single prediction: {title}")
+        st.pyplot(fig)
+        plt.clf()
+        plt.close()
+
+
+# ----------------------------------
+# SHAP FORCE PLOT
+#-----------------------------------  
+import streamlit.components.v1 as components
+def st_shap(plot, height=None):
+    shap_html = f"""
+    <head>
+        {shap.getjs()}
+        <style>
+            body {{
+                background-color: white !format;
+                color: black !important;
+            }}
+        </style>
+    </head>
+    <body>
+        <div style="background-color: white; padding: 10px; border-radius: 5px;">
+            {plot.html()}
+        </div>
+    </body>
+    """
+    components.html(shap_html, height=height)
+    
+def force_plot(qr_models, X, quant, title):
+    X_transformed, new_feature_names, shapvals = create_shap_by_models(qr_models, X, quant)
+    force_p = shap.plots.force(shapvals[0:150])
+    st_shap(force_p, height=400)
+
+
+# ----------------------------------
+# SHAP DEPENDANCE PLOT
+#-----------------------------------  
+def dependance_plot(qr_models, X, quant, title):
+    X_transformed, new_feature_names, shapvals = create_shap_by_models(qr_models, X, quant)
+    col1, col2, col3 = st.columns([1, 10, 1])
+    with col2:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        idx = list(X.columns).index("years_of_schooling")
+        shap.plots.scatter(shapvals[:, idx])
+        plt.title(f"Features Impact on the Prediction: {title}")
         st.pyplot(fig)
         plt.clf()
         plt.close()
