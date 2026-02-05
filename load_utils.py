@@ -9,11 +9,12 @@ import shap
 # MODELS 
 #----------------------------------- 
 @st.cache_resource
-def load_models():
+def load_models(income):
+    print(income)
     return {
-        "low": joblib.load("model/quantile_025.pkl"),    
-        "med": joblib.load("model/quantile_05.pkl"),   
-        "high": joblib.load("model/quantile_075.pkl")
+        "low": joblib.load(f"model/{income}_quantiles_new_0.25.pkl"),    
+        "med": joblib.load(f"model/{income}_quantiles_new_0.5.pkl"),   
+        "high": joblib.load(f"model/{income}_quantiles_new_0.75.pkl")
     } 
 # ----------------------------------
 # REFERENCE DATASET 
@@ -218,6 +219,10 @@ def rename_features(feature_names):
     "annual_healthcare_expenditure_per_capita": "annual_healthcare_expenditure_per_capita",
     "gdp_per_capita_worldbank": "gdp_per_capita_worldbank",
     "healthspending_gdp_ratio": "healthspending_gdp_ratio",
+    "medical_x_undernourishment": "medical_x_undernourishment",
+    "urban_x_medical_access": "urban_x_medical_access",
+    "urban_x_water_access": "urban_x_water_access",
+    "vaccination_x_schooling": "vaccination_x_schooling",
     "nurses_and_midwives_per_1000_people": "nurses_and_midwives_per_1000_people",
     "physicians_per_1000_people": "physicians_per_1000_people",
     "prevalence_of_undernourishment": "prevalence_of_undernourishment",
@@ -242,7 +247,7 @@ def rename_features(feature_names):
 #----------------------------------- 
 @st.cache_resource
 def setup_shap(_model, _data):
-    return shap.LinearExplainer(_model, _data)
+    return shap.Explainer(_model, _data)
 
 # ----------------------------------
 # GENERATE SHAP VALUES BY FEATURES
@@ -280,7 +285,7 @@ def shap_plot(qr_models, X, quant, title):
         #shap.plots.bar(shapvals.abs.sum(0))
         #shap.plots.waterfall(shapvals[4])
         shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, 
-                          plot_size=[12,6], show=False)
+                          plot_size=[12,6], max_display=24, show=False)
         plt.title(f"Features Impact on the Prediction: {title}")
         st.pyplot(fig)
         plt.clf()
@@ -297,7 +302,7 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
     with col2:
         #shap.initjs()
         fig, ax = plt.subplots(figsize=(12, 6))
-        shap.plots.waterfall(shapvals[id], max_display=15, show=False)
+        shap.plots.waterfall(shapvals[id], max_display=20, show=False)
          
         for ax in fig.axes:
             ax.set_xlabel("")  
@@ -316,6 +321,11 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
                 ratio = orig_row["annual_healthcare_expenditure_per_capita"] / orig_row["gdp_per_capita_worldbank"]
                 formatted_ratio = f"{ratio:,.2f}"
                 new_labels.append(f"{formatted_ratio} = {ratio_name}") 
+            #elif '=' in text and "urban_x_medical_access" in text:
+            #    um_name = "urban_x_medical_access"
+            #    urban_medical = (orig_row["nurses_and_midwives_per_1000_people"] + orig_row["physicians_per_1000_people"]) * orig_row["share_of_population_urban"]
+            #    formatted_um = f"{urban_medical:,.2f}"
+            #   new_labels.append(f"{formatted_um} = {um_name}") 
             elif '=' in text:
                 txt_parts = text.split('=')
                 name_part = txt_parts[-1].strip()         
@@ -344,6 +354,24 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
         plt.clf()
         plt.close()
 
+# ----------------------------------
+# BAR PLOT BY INCOME GROUP
+#-----------------------------------  
+
+def shap_bar_plot(qr_models, X, quant, title):
+        
+    X_transformed, new_feature_names, shapvals = create_shap_by_models(qr_models, X, quant)
+    
+    col1, col2, col3 = st.columns([1, 10, 1])
+    with col2:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        #shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, 
+        #                  plot_size=[12,6], max_display=24, show=False)  
+        shap.dependence_plot("years_of_schooling", shapvals.values, X_transformed)      
+        plt.title(f"Features Impact on the Prediction: {title}")
+        st.pyplot(fig) 
+        plt.clf()
+        plt.close()
 
 # ----------------------------------
 # SHAP FORCE PLOT
