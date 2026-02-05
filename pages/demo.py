@@ -14,7 +14,7 @@ __main__.ratio_health_gdp = ratio_health_gdp
 __main__.passthrough_featurenames = passthrough_featurenames 
 
 import joblib 
-from load_utils import load_models, load_df, build_sidebar, shap_plot, shap_bar_plot, shap_decision_plot, force_plot, dependance_plot
+from load_utils import load_models, load_df, build_sidebar, shap_plot, shap_decision_plot, force_plot, dependance_plot
 
 
 
