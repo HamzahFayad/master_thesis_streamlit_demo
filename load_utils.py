@@ -8,7 +8,14 @@ import shap
 # ----------------------------------
 # MODELS 
 #----------------------------------- 
-@st.cache_resource
+@st.cache_resource 
+def load_models():
+    return {
+        "low": joblib.load("model_final/int_quantile_025.pkl"),    
+        "med": joblib.load("model_final/int_quantile_05.pkl"),   
+        "high": joblib.load("model_final/int_quantile_075.pkl")
+    } 
+"""    
 def load_models(income):
     print(income)
     return {
@@ -16,12 +23,14 @@ def load_models(income):
         "med": joblib.load(f"model/{income}_quantiles_new_0.5.pkl"),   
         "high": joblib.load(f"model/{income}_quantiles_new_0.75.pkl")
     } 
+"""
 # ----------------------------------
 # REFERENCE DATASET 
 #-----------------------------------     
 @st.cache_data
 def load_df():
-    df = pd.read_csv("reference_data/base_df.csv")
+    #df = pd.read_csv("reference_data/base_df.csv")
+    df = pd.read_csv("reference_data/reference_df.csv")
     return df
  
  
@@ -211,25 +220,26 @@ def build_sidebar(years_df, years_select, country_select):
     return slider_vars
  
 
+features_list = ["healthspending_gdp_ratio","nurses_and_midwives_per_1000_people","physicians_per_1000_people",
+    "prevalence_of_undernourishment","share_of_population_urban","share_without_improved_water", 
+    "vaccination_coverage_who_unicef","years_of_schooling"]
+
 # ----------------------------------
 # FEATURES FOR ORIGINAL VALUES 
 #----------------------------------- 
 def rename_features(feature_names):
     rename_features = {
-    "annual_healthcare_expenditure_per_capita": "annual_healthcare_expenditure_per_capita",
-    "gdp_per_capita_worldbank": "gdp_per_capita_worldbank",
+    #"annual_healthcare_expenditure_per_capita": "annual_healthcare_expenditure_per_capita",
+    #"gdp_per_capita_worldbank": "gdp_per_capita_worldbank",
     "healthspending_gdp_ratio": "healthspending_gdp_ratio",
-    "medical_x_undernourishment": "medical_x_undernourishment",
-    "urban_x_medical_access": "urban_x_medical_access",
-    "urban_x_water_access": "urban_x_water_access",
-    "vaccination_x_schooling": "vaccination_x_schooling",
     "nurses_and_midwives_per_1000_people": "nurses_and_midwives_per_1000_people",
     "physicians_per_1000_people": "physicians_per_1000_people",
     "prevalence_of_undernourishment": "prevalence_of_undernourishment",
     "share_of_population_urban": "share_of_population_urban",
     "share_without_improved_water": "share_without_improved_water", 
     "vaccination_coverage_who_unicef": "vaccination_coverage_who_unicef",
-    "years_of_schooling": "years_of_schooling"       
+    "years_of_schooling": "years_of_schooling",
+    "health_gdp_ratio_x_world_income_group_Upper-middle-income countries": "healthspending_gdp_ratio * upper-middle-income countries"    
     }
     prefix = ["world_regions_wb_", "world_income_group_"]
     
@@ -265,7 +275,7 @@ def create_shap_by_models(qr_models, X, quant):
     expl = setup_shap(model, X_transformed)
     shapvals = expl(X_transformed)    
     shapvals.feature_names = list(new_feature_names)
-        
+    #print(new_feature_names)
     #bv_expanded = shapvals.base_values[:, None]
     #shapvals.values = np.expm1(shapvals.values + bv_expanded) - np.expm1(bv_expanded)
     #shapvals.base_values = np.expm1(shapvals.base_values)
@@ -278,14 +288,14 @@ def create_shap_by_models(qr_models, X, quant):
 def shap_plot(qr_models, X, quant, title):
     
     X_transformed, new_feature_names, shapvals = create_shap_by_models(qr_models, X, quant)
-    
+ 
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
         fig, ax = plt.subplots(figsize=(12, 6))
         #shap.plots.bar(shapvals.abs.sum(0))
         #shap.plots.waterfall(shapvals[4])
         shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, 
-                          plot_size=[12,6], max_display=24, show=False)
+                          plot_size=[12,6], max_display=15, show=False)
         plt.title(f"Features Impact on the Prediction: {title}")
         st.pyplot(fig)
         plt.clf()
@@ -302,7 +312,7 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
     with col2:
         #shap.initjs()
         fig, ax = plt.subplots(figsize=(12, 6))
-        shap.plots.waterfall(shapvals[id], max_display=20, show=False)
+        shap.plots.waterfall(shapvals[id], max_display=15, show=False)
          
         for ax in fig.axes:
             ax.set_xlabel("")  
@@ -326,6 +336,7 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
             #    urban_medical = (orig_row["nurses_and_midwives_per_1000_people"] + orig_row["physicians_per_1000_people"]) * orig_row["share_of_population_urban"]
             #    formatted_um = f"{urban_medical:,.2f}"
             #   new_labels.append(f"{formatted_um} = {um_name}") 
+                #new_labels.remove(text)
             elif '=' in text:
                 txt_parts = text.split('=')
                 name_part = txt_parts[-1].strip()         

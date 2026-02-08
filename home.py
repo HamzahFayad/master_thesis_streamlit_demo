@@ -24,10 +24,10 @@ about = '''
               
         Due to the highly sensitive topic and the use of only aggregated country-level data within a small period,
         this tool does not provide causal effects but rather just potential correlations between features and the target.
-        It can provide first insights on which indicator has a big effect on the target value.
+        It can provide first insights on which indicator has a big effect on the target value based on the chosen countrys' income group.
         
         All data come from *Our World in Data (https://ourworldindata.org/)*, primarly gathered from UN, WHO, World Bank, UNICEF, UN IGME.
-        Indicator *help descriptions* in the demos' sidebar were taken from Our World in Data. 
+        Indicator *help descriptions* (?) in the demos' sidebar were taken from Our World in Data. 
         '''
 st.title(title)
 st.subheader(subtitle)
