@@ -369,12 +369,12 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             #chart_by_income
      
     df_preds = pd.DataFrame({
-    "base_q025": predicts_original["pred_low"],
-    "whatif_q025": predicts_new["pred_low"],
-    "base_q05": predicts_original["pred_med"],
-    "whatif_q05": predicts_new["pred_med"],
-    "base_q075": predicts_original["pred_high"],
-    "whatif_q075": predicts_new["pred_high"],
+    "base_q025": q25_pred,
+    "whatif_q025": q25_new,
+    "base_q05": q50_pred,
+    "whatif_q05": q50_new,
+    "base_q075": q75_pred,
+    "whatif_q075": q75_new,
     "base_year": predicts_original["Year"],
     "whatif_year": predicts_new["Year"]
     })    
@@ -408,7 +408,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     
     #predicts_new_global["feat_ind"] = indicators[choose_factor]
 
-    country_med = predicts_new_global.groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
+    country_med = predicts_new_global.groupby(["world_income_group", "years_of_schooling", "Entity", "pred_high"])["effect_perc"].mean().reset_index()
     #country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
 
     col_sens1, col_sens2, col_sens3 = st.columns([1, 10, 1])
@@ -422,6 +422,13 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
         )
         ax.set_ylabel("Absolute change")
         ax.set_title("...")
+        for i in range(country_med.shape[0]):
+            if country_med.Entity[i] == years_df["Entity"].iloc[0]:
+                plt.text(x=country_med["years_of_schooling"][i]+0.2, 
+                    y=country_med["effect_perc"][i], 
+                    s=country_med.Entity.iloc[i],   
+                    fontdict=dict(color='red', size=10))
+                break
         #plt.legend()
         st.pyplot(fig)
      
