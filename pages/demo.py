@@ -87,6 +87,10 @@ else:
 #-----------------------------------
 modified_df = years_df.copy()
 
+#NEW_TEST
+orig_global_df = df_ref.copy()
+modified_global_df = df_ref.copy()
+
 # ----------------------------------
 # SIDEBAR TO ADJUST INDICATORS
 #-----------------------------------
@@ -101,14 +105,31 @@ if years_select and country_select is not None:
     modified_df = years_df.assign(
         annual_healthcare_expenditure_per_capita = lambda x: x["annual_healthcare_expenditure_per_capita"] * (1 + indicators["ahec"] / 100),
         gdp_per_capita_worldbank = lambda x: x["gdp_per_capita_worldbank"] * (1 + indicators["gdp"] / 100),
-        nurses_and_midwives_per_1000_people = lambda x: x["nurses_and_midwives_per_1000_people"] * (1 + indicators["nm"] / 100),
-        physicians_per_1000_people = lambda x: x["physicians_per_1000_people"] * (1 + indicators["phys"] / 100),
-        prevalence_of_undernourishment = lambda x: x["prevalence_of_undernourishment"] + indicators["undernourishment"],
-        share_of_population_urban = lambda x: x["share_of_population_urban"] + indicators["urban"],
-        share_without_improved_water = lambda x: x["share_without_improved_water"] + indicators["water"],
-        vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + indicators["vaccination"],
-        years_of_schooling = lambda x: x['years_of_schooling'] + indicators["school"]
-    )  
+        
+        nurses_and_midwives_per_1000_people = lambda x: x["nurses_and_midwives_per_1000_people"] + (21 - x["nurses_and_midwives_per_1000_people"]) * (indicators["nm"] / 100), #* (1 + indicators["nm"] / 100),
+        physicians_per_1000_people = lambda x: x["physicians_per_1000_people"] + (9 - x["physicians_per_1000_people"]) * (indicators["phys"] / 100),      
+        prevalence_of_undernourishment = lambda x: x["prevalence_of_undernourishment"] - (x["prevalence_of_undernourishment"] - 0) * (indicators["undernourishment"] / 100), 
+        share_of_population_urban = lambda x: x["share_of_population_urban"] + (100 - x["share_of_population_urban"]) * (indicators["urban"] / 100),
+        share_without_improved_water = lambda x: x["share_without_improved_water"] - (x["share_without_improved_water"] - 0) * (indicators["water"] / 100),      
+        vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + (100 - x["vaccination_coverage_who_unicef"]) * (indicators["vaccination"] / 100),    
+        years_of_schooling = lambda x: x["years_of_schooling"] + (13 - x["years_of_schooling"]) * (indicators["school"] / 100)
+    )
+    #NEW_TEST
+    modified_global_df = orig_global_df.assign(
+        annual_healthcare_expenditure_per_capita = lambda x: x["annual_healthcare_expenditure_per_capita"] * (1 + indicators["ahec"] / 100),
+        gdp_per_capita_worldbank = lambda x: x["gdp_per_capita_worldbank"] * (1 + indicators["gdp"] / 100),
+        
+        nurses_and_midwives_per_1000_people = lambda x: x["nurses_and_midwives_per_1000_people"] + (21 - x["nurses_and_midwives_per_1000_people"]) * (indicators["nm"] / 100), #* (1 + indicators["nm"] / 100),
+        physicians_per_1000_people = lambda x: x["physicians_per_1000_people"] + (9 - x["physicians_per_1000_people"]) * (indicators["phys"] / 100),      
+        prevalence_of_undernourishment = lambda x: x["prevalence_of_undernourishment"] - (x["prevalence_of_undernourishment"] - 0) * (indicators["undernourishment"] / 100), 
+        share_of_population_urban = lambda x: x["share_of_population_urban"] + (100 - x["share_of_population_urban"]) * (indicators["urban"] / 100),
+        share_without_improved_water = lambda x: x["share_without_improved_water"] - (x["share_without_improved_water"] - 0) * (indicators["water"] / 100),      
+        vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + (100 - x["vaccination_coverage_who_unicef"]) * (indicators["vaccination"] / 100),    
+        years_of_schooling = lambda x: x["years_of_schooling"] + (13 - x["years_of_schooling"]) * (indicators["school"] / 100)
+    )
+    #modified_global_df
+    #NEW_TEST
+    
     # ----------------------------------
     # Q-MODELS PREDICTIONS WITH ORIGINAL DF
     #----------------------------------- 
@@ -127,7 +148,23 @@ if years_select and country_select is not None:
         pred_low  = qr_models["low"].predict(X_new) + SHIFT["q25"],
         pred_med  = qr_models["med"].predict(X_new) + SHIFT["q50"],
         pred_high = qr_models["high"].predict(X_new) + SHIFT["q75"]
-    ) 
+    )
+    
+    # ----------------------------------
+    # Q-MODELS PREDICTIONS FOR OTHERS
+    #----------------------------------- 
+    X_orig_others = orig_global_df.drop(columns=["Entity", "Code", "Year", "child_mortality_igme", "pred_low", "pred_med", "pred_high", "q05_pos", "q075_pos", "bandwidth", "bandwidth_pos"])
+    predicts_orig_global = orig_global_df.assign(
+        pred_low  = qr_models["low"].predict(X_orig_others) + SHIFT["q25"],
+        pred_med  = qr_models["med"].predict(X_orig_others) + SHIFT["q50"],
+        pred_high = qr_models["high"].predict(X_orig_others) + SHIFT["q75"]
+    )  
+    X_new_others = modified_global_df.drop(columns=["Entity", "Code", "Year", "child_mortality_igme", "pred_low", "pred_med", "pred_high", "q05_pos", "q075_pos", "bandwidth", "bandwidth_pos"])
+    predicts_new_global = modified_global_df.assign(
+        pred_low  = qr_models["low"].predict(X_new_others) + SHIFT["q25"],
+        pred_med  = qr_models["med"].predict(X_new_others) + SHIFT["q50"],
+        pred_high = qr_models["high"].predict(X_new_others) + SHIFT["q75"]
+    )  
     st.divider()
     # ----------------------------------
     # SHOW REFERENCE Q-MODELS PREDICTIONS 
@@ -329,7 +366,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             year_choice_new3 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_new3")
             shap_decision_plot(qr_models, X_new, "high", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.75)", predicts_new["pred_high"], choice_years.index(year_choice_new3))
             #st.line_chart(chart_by_income, x="", y="")
-            chart_by_income
+            #chart_by_income
      
     df_preds = pd.DataFrame({
     "base_q025": predicts_original["pred_low"],
@@ -356,6 +393,39 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             st.pyplot(fig)
 
     
+    # ----------------------------------
+    # SHOW SENSITIVITY BY 1 FEATURE
+    # BY INCOME GROUPS   
+    # AFTER SIMULATION
+    #----------------------------------- 
+    slider_ind = ["years_of_schooling"]
+    choose_factor = st.selectbox(label="Choose factor to view sensitivity...", options=slider_ind, key="factor")
+    
+    y_pred_orig_global = predicts_orig_global["pred_high"]        
+    y_pred_new_global =  predicts_new_global["pred_high"]
+    predicts_new_global["effect_perc"] = y_pred_new_global - y_pred_orig_global   #absolut
+    #predicts_new_global["effect_perc"] = (y_pred_new_global - y_pred_orig_global) / y_pred_orig_global * 100  #relativ
+    
+    #predicts_new_global["feat_ind"] = indicators[choose_factor]
+
+    country_med = predicts_new_global.groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
+    #country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
+
+    col_sens1, col_sens2, col_sens3 = st.columns([1, 10, 1])
+    with col_sens2:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        sns.scatterplot(
+            x=country_med["years_of_schooling"].round(1),
+            y=country_med["effect_perc"].round(4),
+            hue="world_income_group",
+            data=country_med,
+        )
+        ax.set_ylabel("Absolute change")
+        ax.set_title("...")
+        #plt.legend()
+        st.pyplot(fig)
+     
+    #--------------   
     st.divider()    
     st.info(f"ORIGINAL PRED (25%, 50%, 75%): "
         f"{predicts_original['pred_low'].median():.2f}, {predicts_original['pred_med'].median():.2f}, {predicts_original['pred_high'].median():.2f}")

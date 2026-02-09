@@ -38,6 +38,16 @@ def load_df():
 # ----------------------------------
 # SIDEBAR WITH FEATURE ADJUSTMENTS 
 #----------------------------------- 
+def simulate_feature(current, min_val, max_val, improvement_pct, direction="up"):
+    if direction == "up":
+        remaining = max_val - current
+        new_value = current + remaining * (improvement_pct / 100)
+    elif direction == "down":
+        remaining = current - min_val
+        new_value = current - remaining * (improvement_pct / 100)
+    return new_value
+
+
 slider_vars = {
     "ahec": 0,
     "gdp": 0, 
@@ -96,46 +106,53 @@ def build_sidebar(years_df, years_select, country_select):
         
         #Nurses & midwives per 1000
         slider_vars["nm"] = st.slider(
-        "Increase :orange[*nurses/midwives per 1000 people*]",
+        "Increase :orange[*nurses/midwives per 1000 people*] (%)",
         min_value=0.0,
         max_value=100.0,
         value=0.0,
-        step=0.5,
+        step=1.0,
         format="%.1f%%",
         help="Nurses and midwives include professional nurses, professional midwives, auxiliary nurses & midwives, enrolled nurses & midwives and other associated personnel."
         )
+        current_val_nm = years_df['nurses_and_midwives_per_1000_people'].median()
+        new_val_nm = current_val_nm + (21 - current_val_nm) * (slider_vars["nm"] / 100)
         st.caption(
-        f"~ {(years_df['nurses_and_midwives_per_1000_people'].median() * (1 + slider_vars['nm'] / 100)):.2f} per 1000"
+        f"**current**: {(current_val_nm):.2f} per 1000 | **new**: {(new_val_nm):.2f} per 1000"
         )
         st.space()
             
         #Physicians per 1000
         slider_vars["phys"] = st.slider(
-        "Increase :orange[*physicians per 1000 people*]",
+        "Increase :orange[*physicians per 1000 people*] (%)",
         min_value=0.0,
         max_value=100.0,
         value=0.0,
-        step=0.5,
+        step=1.0,
         format="%.1f%%",
         help="Physicians include generalist and specialist medical practitioners."
         )
+        current_val_ph = years_df['physicians_per_1000_people'].median()
+        new_val_phys = current_val_ph + (9 - current_val_ph) * (slider_vars["phys"] / 100)
         st.caption(
-        f"~ {(years_df['physicians_per_1000_people'].median() * (1 + slider_vars['phys'] / 100)):.2f} per 1000"
+        f"**current**: {(current_val_ph):.2f} per 1000 | **new**: {(new_val_phys):.2f} per 1000"
         )
         st.space()
             
         #vaccination coverage 
         slider_vars["vaccination"] = st.slider(
-        "Increase :orange[*vaccination coverage*]",
+        "Increase :orange[*vaccination coverage*] (%)",
         min_value=0.0,
-        max_value=100 - float(years_df["vaccination_coverage_who_unicef"].max()),
+        max_value=100.0, #- float(years_df["vaccination_coverage_who_unicef"].max()),
         value=0.0,
-        step=0.5,
+        step=1.0,
+        disabled=years_df['vaccination_coverage_who_unicef'].median() >= 99.9,
         format="%.1f%%",
         help="Share of one-year-olds who have had three doses of the combined diphtheria, tetanus and pertussis vaccine in a given year."
         )
+        current_val_vacc = years_df['vaccination_coverage_who_unicef'].median()
+        new_val_vacc = current_val_vacc + (100 - current_val_vacc) * (slider_vars["vaccination"] / 100)
         st.caption(
-        f"~ {( min(100.0, years_df['vaccination_coverage_who_unicef'].median() + slider_vars['vaccination']) ):.2f} %"
+        f"**current**: {(current_val_vacc):.2f} % | **new**: {(new_val_vacc):.2f} %"
         )
         st.space()
             
@@ -144,52 +161,58 @@ def build_sidebar(years_df, years_select, country_select):
             
         #Share of population urban 
         slider_vars["urban"] = st.slider(
-        "Increase :orange[*share of population urban*]",
+        "Increase :orange[*share of population urban*] (%)",
         min_value=0.0,
-        max_value=100 - float(years_df["share_of_population_urban"].max()) if not years_df['share_of_population_urban'].median() >= 100.0 else 0.5,
+        max_value=100.0, #- float(years_df["share_of_population_urban"].max()) if not years_df['share_of_population_urban'].median() >= 100.0 else 0.5,
         #max_value=float(100.0 / years_df["share_of_population_urban"].median() -1) * 100, #50.0,
         value=0.0,
-        step=0.5,
+        step=1.0,
         format="%.1f%%",
-        disabled=years_df['share_of_population_urban'].median() >= 100.0,
+        disabled=years_df['share_of_population_urban'].median() >= 99,
         help="Share of the population living in urban areas."
         )
+        current_val_urban = years_df['share_of_population_urban'].median()
+        new_val_urban = current_val_urban + (100 - current_val_urban) * (slider_vars["urban"] / 100)
         st.caption(
-        f"~ {( min(100.0, years_df['share_of_population_urban'].median() + slider_vars['urban']) ):.2f} %"
+        f"**current**: {(current_val_urban):.2f} % | **new**: {(new_val_urban):.2f} %"
         )
         st.space()
             
         #Prevalence of undernourishment
         slider_vars["undernourishment"] = st.slider(
-        "Decrease :orange[*prevalence of undernourishment*]",
+        "Decrease :orange[*prevalence of undernourishment*] (%)",
         #min_value=-100.0,
-        min_value=-float(years_df['prevalence_of_undernourishment'].min()),
-        max_value=0.0,
+        min_value=0.0, #-float(years_df['prevalence_of_undernourishment'].min()),
+        max_value=100.0,
         value=0.0,
-        step=0.5,
+        step=1.0,
         disabled=years_df['prevalence_of_undernourishment'].median() <= 0.1,
         format="%.1f%%",
         help="Share of the population whose daily food intake does not provide enough energy to maintain a normal, active, and healthy life."
         )
+        current_val_und = years_df['prevalence_of_undernourishment'].median()
+        new_val_und = current_val_und - (current_val_und - 0) * (slider_vars["undernourishment"] / 100)
         st.caption(
-        f"~ {(years_df['prevalence_of_undernourishment'].median() + slider_vars['undernourishment']):.2f} %"
+        f"**current**: {(current_val_und):.2f} % | **new**: {(new_val_und):.2f} %"
         )
         st.space()
 
         #Share without improved water 
         slider_vars["water"] = st.slider(
-        "Decrease :orange[*share of population without improved water*]",
+        "Decrease :orange[*share of population without improved water*] (%)",
         #min_value=-float(years_df['share_without_improved_water'].min()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
-        min_value=-float(years_df['share_without_improved_water'].median()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
-        max_value=0.0,
+        min_value= 0.0, #-float(years_df['share_without_improved_water'].median()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
+        max_value=100.0,
         value=0.0,
-        step=0.5,
+        step=1.0,
         disabled=years_df['share_without_improved_water'].median() <= 0.1,
         format="%.1f%%",
         help="Improved drinking water sources are those that have the potential to deliver safe water by nature of their design and construction, and include: piped water, boreholes or tubewells, protected dug wells, protected springs, rainwater, and packaged or delivered water."
         )
+        current_val_water = years_df['share_without_improved_water'].median()
+        new_val_water = current_val_water - (current_val_water - 0) * (slider_vars["water"] / 100)
         st.caption(
-        f"~ {( years_df['share_without_improved_water'].median() + slider_vars['water'] ):.2f} %"
+        f"**current**: {(current_val_water):.2f} % | **new**: {(new_val_water):.2f} %"
         )
         st.space()
             
@@ -198,17 +221,19 @@ def build_sidebar(years_df, years_select, country_select):
             
         #years of schooling 
         slider_vars["school"] = st.slider(
-        "Increase :orange[*years of schooling*]",
+        "Increase :orange[*years of schooling*] (%)",
         min_value=0.0,
-        max_value=float(max(0.0, 14.0 - years_df['years_of_schooling'].median())) if not years_df['years_of_schooling'].median() > 14.0 else 0.5,
+        max_value=100.0, #float(max(0.0, 14.0 - years_df['years_of_schooling'].median())) if not years_df['years_of_schooling'].median() > 14.0 else 0.5,
         value=0.0,
-        step=0.5,
-        disabled=years_df['years_of_schooling'].median() > 14.0,
-        format="%.1f years",
+        step=1.0,
+        disabled=years_df['years_of_schooling'].median() >= 13.0,
+        format="%.1f%%",
         help="Average number of years women aged 25 and older have spent in formal education."
         )
+        current_val_school = years_df['years_of_schooling'].median()
+        new_val_school = current_val_school + (13 - current_val_school) * (slider_vars["school"] / 100)
         st.caption(
-        f"~ {( years_df['years_of_schooling'].median() + slider_vars['school']):.1f} school years"
+        f"**current**: {(current_val_school):.1f} school years | **new**: {(new_val_school):.1f} school years"
         )
         st.space()
             
@@ -239,7 +264,7 @@ def rename_features(feature_names):
     "share_without_improved_water": "share_without_improved_water", 
     "vaccination_coverage_who_unicef": "vaccination_coverage_who_unicef",
     "years_of_schooling": "years_of_schooling",
-    "health_gdp_ratio_x_world_income_group_Upper-middle-income countries": "healthspending_gdp_ratio * upper-middle-income countries"    
+    #"health_gdp_ratio_x_world_income_group_Upper-middle-income countries": "healthspending_gdp_ratio * upper-middle-income countries"    
     }
     prefix = ["world_regions_wb_", "world_income_group_"]
     
