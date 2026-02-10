@@ -55,6 +55,7 @@ with col2:
     
 
 st.divider()
+st.divider()
 st.caption("This project uses Machine Learning to predict under-five mortality rates at country-level. For more check out the git repository: https://github.com/HamzahFayad/master_thesis_child_mortality")
 
 
