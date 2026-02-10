@@ -290,7 +290,7 @@ if years_select and country_select is not None:
             year_choice_orig3 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig3")
             shap_decision_plot(qr_models, X_original, "high", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.75)", predicts_original["pred_high"], choice_years.index(year_choice_orig3))   
     st.divider()       
-    
+    st.divider()
     
 if st.session_state.simulate_btn and (years_select and country_select is not None):
     # ----------------------------------
@@ -392,54 +392,68 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             ax.set_title(f"Reference vs. Simulated U5MR Prediction For {base_df['Entity'].iloc[0]}")
             st.pyplot(fig)
 
-    
+    st.divider()
+    st.divider()
     # ----------------------------------
     # SHOW SENSITIVITY BY 1 FEATURE
     # BY INCOME GROUPS   
     # AFTER SIMULATION
-    #----------------------------------- 
-    slider_ind = ["years_of_schooling"]
-    choose_factor = st.selectbox(label="Choose factor to view sensitivity...", options=slider_ind, key="factor")
-    
-    y_pred_orig_global = predicts_orig_global["pred_high"]        
-    y_pred_new_global =  predicts_new_global["pred_high"]
-    predicts_new_global["effect_perc"] = y_pred_new_global - y_pred_orig_global   #absolut
-    #predicts_new_global["effect_perc"] = (y_pred_new_global - y_pred_orig_global) / y_pred_orig_global * 100  #relativ
-    
-    #predicts_new_global["feat_ind"] = indicators[choose_factor]
+    #-----------------------------------
+    if "changed_sliders" in st.session_state and st.session_state.changed_sliders:
+        st.markdown(f"##### Indicator Sensitivity on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions*")
 
-    country_med = predicts_new_global.groupby(["world_income_group", "years_of_schooling", "Entity", "pred_high"])["effect_perc"].mean().reset_index()
-    #country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
+        list_features = st.session_state.changed_sliders
+        choose_factor = st.selectbox(label="Choose factor to view sensitivity", options=list_features, key="factor")
+        choose_group = st.radio("Choose group comparison", ["world_income_group", "world_regions_wb"], horizontal=True, key="group")
+        
+        y_pred_orig_global = predicts_orig_global["pred_high"]        
+        y_pred_new_global =  predicts_new_global["pred_high"]
+        predicts_new_global["effect_perc"] = y_pred_new_global - y_pred_orig_global   #absolut
+        #predicts_new_global["effect_perc"] = (y_pred_new_global - y_pred_orig_global) / y_pred_orig_global * 100  #relativ
 
-    col_sens1, col_sens2, col_sens3 = st.columns([1, 10, 1])
-    with col_sens2:
-        fig, ax = plt.subplots(figsize=(12, 6))
-        sns.scatterplot(
-            x=country_med["years_of_schooling"].round(1),
-            y=country_med["effect_perc"].round(4),
-            hue="world_income_group",
-            data=country_med,
-        )
-        ax.set_ylabel("Absolute change")
-        ax.set_title("...")
-        for i in range(country_med.shape[0]):
-            if country_med.Entity[i] == years_df["Entity"].iloc[0]:
-                plt.text(x=country_med["years_of_schooling"][i]+0.2, 
-                    y=country_med["effect_perc"][i], 
-                    s=country_med.Entity.iloc[i],   
-                    fontdict=dict(color='red', size=10))
-                break
-        #plt.legend()
-        st.pyplot(fig)
+        country_med = predicts_new_global.groupby([choose_group, choose_factor, "Entity", "pred_high"])["effect_perc"].mean().reset_index()
+        #country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
+            
+        col_sens1, col_sens2, col_sens3 = st.columns([1, 10, 1])
+        with col_sens2:
+            fig, ax = plt.subplots(figsize=(12, 6))
+            sns.scatterplot(
+                x=country_med[choose_factor].round(1),
+                y=country_med["effect_perc"].round(4),
+                hue=choose_group,
+                size=country_med["effect_perc"].round(4),
+                sizes=(120, 60),
+                data=country_med,
+                ax=ax
+            )
+            ax.set_ylabel("Absolute change")
+            ax.set_title(f"Sensitvity of U5MR to {choose_factor} by income groups")
+            for i in range(country_med.shape[0]):
+                if country_med.Entity[i] == years_df["Entity"].iloc[0]:
+                    plt.text(x=country_med[choose_factor][i]+0.2, 
+                        y=country_med["effect_perc"][i], 
+                        s=country_med.Entity.iloc[i],   
+                        fontdict=dict(color='black', size=10),
+                        bbox=dict(facecolor='white', alpha=0.8))
+                    break
+            #plt.legend()
+            st.pyplot(fig)
      
+     
+    
+    #-------------- 
     #--------------   
-    st.divider()    
-    st.info(f"ORIGINAL PRED (25%, 50%, 75%): "
-        f"{predicts_original['pred_low'].median():.2f}, {predicts_original['pred_med'].median():.2f}, {predicts_original['pred_high'].median():.2f}")
-    st.info(f"NEW PRED (25%, 50%, 75%): "
-        f"{predicts_new['pred_low'].tolist()}, {predicts_new['pred_med'].median():.2f}, {predicts_new['pred_high'].median():.2f}")
-
-    st.divider()      
+    #--------------   
+    #--------------   
+    #--------------   
+    #--------------   
+    #--------------     
+    #st.info(f"ORIGINAL PRED (25%, 50%, 75%): "
+    #    f"{predicts_original['pred_low'].median():.2f}, {predicts_original['pred_med'].median():.2f}, {predicts_original['pred_high'].median():.2f}")
+    #st.info(f"NEW PRED (25%, 50%, 75%): "
+    #    f"{predicts_new['pred_low'].tolist()}, {predicts_new['pred_med'].median():.2f}, {predicts_new['pred_high'].median():.2f}")
+    st.divider()
     expander = st.expander(f"For reference, view actual historical child mortality rates for {base_df['Entity'].iloc[0]} (ground truth)")
     for i, (idx, row) in enumerate(years_df.iterrows()):        
         expander.write(f'{row["Year"]}: {row["child_mortality_igme"]:.2f} per 1000')
+    

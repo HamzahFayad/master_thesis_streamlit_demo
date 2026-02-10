@@ -34,30 +34,30 @@ def load_df():
     return df
  
  
+#Features
+DEFAULTS = {
+    "nurses_and_midwives_per_1000_people": 0.0, 
+    "physicians_per_1000_people": 0.0, 
+    "prevalence_of_undernourishment": 0.0, 
+    "share_of_population_urban": 0.0, 
+    "share_without_improved_water": 0.0, 
+    "vaccination_coverage_who_unicef": 0.0,
+    "years_of_schooling": 0.0    
+}
 
 # ----------------------------------
 # SIDEBAR WITH FEATURE ADJUSTMENTS 
 #----------------------------------- 
-def simulate_feature(current, min_val, max_val, improvement_pct, direction="up"):
-    if direction == "up":
-        remaining = max_val - current
-        new_value = current + remaining * (improvement_pct / 100)
-    elif direction == "down":
-        remaining = current - min_val
-        new_value = current - remaining * (improvement_pct / 100)
-    return new_value
-
-
 slider_vars = {
-    "ahec": 0,
-    "gdp": 0, 
-    "nm": 0, 
-    "phys": 0, 
-    "vaccination": 0, 
-    "urban": 0, 
-    "undernourishment": 0, 
-    "water": 0,
-    "school": 0    
+    "ahec": 0.0,
+    "gdp": 0.0, 
+    "nm": 0.0, 
+    "phys": 0.0, 
+    "vaccination": 0.0, 
+    "urban": 0.0, 
+    "undernourishment": 0.0, 
+    "water": 0.0,
+    "school": 0.0    
 }
 
 @st.fragment
@@ -74,7 +74,7 @@ def build_sidebar(years_df, years_select, country_select):
         #Annual Healthcare Exp. per capita
         slider_vars["ahec"] = st.slider(
         "Increase :orange[*annual health spending per capita*]",
-            min_value=0.0,
+        min_value=0.0,
         max_value=100.0,
         value=0.0,
         step=1.0,
@@ -112,6 +112,7 @@ def build_sidebar(years_df, years_select, country_select):
         value=0.0,
         step=1.0,
         format="%.1f%%",
+        key="nurses_and_midwives_per_1000_people",
         help="Nurses and midwives include professional nurses, professional midwives, auxiliary nurses & midwives, enrolled nurses & midwives and other associated personnel."
         )
         current_val_nm = years_df['nurses_and_midwives_per_1000_people'].median()
@@ -129,6 +130,7 @@ def build_sidebar(years_df, years_select, country_select):
         value=0.0,
         step=1.0,
         format="%.1f%%",
+        key="physicians_per_1000_people",
         help="Physicians include generalist and specialist medical practitioners."
         )
         current_val_ph = years_df['physicians_per_1000_people'].median()
@@ -147,6 +149,7 @@ def build_sidebar(years_df, years_select, country_select):
         step=1.0,
         disabled=years_df['vaccination_coverage_who_unicef'].median() >= 99.9,
         format="%.1f%%",
+        key="vaccination_coverage_who_unicef",
         help="Share of one-year-olds who have had three doses of the combined diphtheria, tetanus and pertussis vaccine in a given year."
         )
         current_val_vacc = years_df['vaccination_coverage_who_unicef'].median()
@@ -168,6 +171,7 @@ def build_sidebar(years_df, years_select, country_select):
         value=0.0,
         step=1.0,
         format="%.1f%%",
+        key="share_of_population_urban",
         disabled=years_df['share_of_population_urban'].median() >= 99,
         help="Share of the population living in urban areas."
         )
@@ -188,6 +192,7 @@ def build_sidebar(years_df, years_select, country_select):
         step=1.0,
         disabled=years_df['prevalence_of_undernourishment'].median() <= 0.1,
         format="%.1f%%",
+        key="prevalence_of_undernourishment",
         help="Share of the population whose daily food intake does not provide enough energy to maintain a normal, active, and healthy life."
         )
         current_val_und = years_df['prevalence_of_undernourishment'].median()
@@ -207,6 +212,7 @@ def build_sidebar(years_df, years_select, country_select):
         step=1.0,
         disabled=years_df['share_without_improved_water'].median() <= 0.1,
         format="%.1f%%",
+        key="share_without_improved_water",
         help="Improved drinking water sources are those that have the potential to deliver safe water by nature of their design and construction, and include: piped water, boreholes or tubewells, protected dug wells, protected springs, rainwater, and packaged or delivered water."
         )
         current_val_water = years_df['share_without_improved_water'].median()
@@ -228,6 +234,7 @@ def build_sidebar(years_df, years_select, country_select):
         step=1.0,
         disabled=years_df['years_of_schooling'].median() >= 13.0,
         format="%.1f%%",
+        key="years_of_schooling",
         help="Average number of years women aged 25 and older have spent in formal education."
         )
         current_val_school = years_df['years_of_schooling'].median()
@@ -239,15 +246,15 @@ def build_sidebar(years_df, years_select, country_select):
             
         st.divider()
         if st.button("Simulate", type="primary"):
+            changed_sliders = [
+                key for key, default in DEFAULTS.items()
+                if st.session_state.get(key) != default
+            ]
+            st.session_state.changed_sliders = changed_sliders
             st.session_state.simulate_btn = True
             st.rerun()
         
     return slider_vars
- 
-
-features_list = ["healthspending_gdp_ratio","nurses_and_midwives_per_1000_people","physicians_per_1000_people",
-    "prevalence_of_undernourishment","share_of_population_urban","share_without_improved_water", 
-    "vaccination_coverage_who_unicef","years_of_schooling"]
 
 # ----------------------------------
 # FEATURES FOR ORIGINAL VALUES 
