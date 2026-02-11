@@ -167,6 +167,7 @@ if years_select and country_select is not None:
     )  
     st.divider()
     # ----------------------------------
+    # PART 1:
     # SHOW REFERENCE Q-MODELS PREDICTIONS 
     # WITHOUT ANY SIMULATION
     # PLUS QUANTILE FOCUS
@@ -294,6 +295,7 @@ if years_select and country_select is not None:
     
 if st.session_state.simulate_btn and (years_select and country_select is not None):
     # ----------------------------------
+    # PART 2:
     # SHOW Q-MODELS PREDICTIONS 
     # AFTER SIMULATION
     #----------------------------------- 
@@ -395,43 +397,62 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     st.divider()
     st.divider()
     # ----------------------------------
+    # PART 3:
     # SHOW SENSITIVITY BY 1 FEATURE
     # BY INCOME GROUPS   
     # AFTER SIMULATION
     #-----------------------------------
     if "changed_sliders" in st.session_state and st.session_state.changed_sliders:
         st.markdown(f"##### Indicator Sensitivity on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions*")
-
+        focusQ = ""
+    
         list_features = st.session_state.changed_sliders
         choose_factor = st.selectbox(label="Choose factor to view sensitivity", options=list_features, key="factor")
-        choose_group = st.radio("Choose group comparison", ["world_income_group", "world_regions_wb"], horizontal=True, key="group")
         
-        y_pred_orig_global = predicts_orig_global["pred_high"]        
-        y_pred_new_global =  predicts_new_global["pred_high"]
-        predicts_new_global["effect_perc"] = y_pred_new_global - y_pred_orig_global   #absolut
-        #predicts_new_global["effect_perc"] = (y_pred_new_global - y_pred_orig_global) / y_pred_orig_global * 100  #relativ
+        abs_eff_col, rel_eff_col = st.columns(2)
+        with abs_eff_col:
+            choose_group = st.radio("Choose group comparison", ["world_income_group", "world_regions_wb"], horizontal=True, key="group")
+        with rel_eff_col:
+            choose_effect = st.radio("Choose absolute difference (per 1000) or relative difference (%)", ["absolute", "relative"], horizontal=True, key="effect")
+        
+        if focus_quant_025:
+            focusQ = "pred_low"
+        elif focus_quant_05:
+            focusQ = "pred_med"
+        else:
+            focusQ = "pred_high"
+        y_pred_orig_global = predicts_orig_global[focusQ]        
+        y_pred_new_global =  predicts_new_global[focusQ]
+        
+        if choose_effect == "absolute":
+            predicts_new_global[choose_effect] = y_pred_new_global - y_pred_orig_global   #absolut
+        else:
+            predicts_new_global[choose_effect] = (y_pred_new_global - y_pred_orig_global) / y_pred_orig_global * 100 #relativ
+        #std = predicts_new_global.groupby(choose_group)["effect_perc"].std()
 
-        country_med = predicts_new_global.groupby([choose_group, choose_factor, "Entity", "pred_high"])["effect_perc"].mean().reset_index()
+        country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby([choose_group, choose_factor, "Entity", focusQ])[choose_effect].mean().reset_index()
         #country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
-            
+        
+        #Sensitivity Plot
         col_sens1, col_sens2, col_sens3 = st.columns([1, 10, 1])
         with col_sens2:
             fig, ax = plt.subplots(figsize=(12, 6))
             sns.scatterplot(
                 x=country_med[choose_factor].round(1),
-                y=country_med["effect_perc"].round(4),
+                y=country_med[choose_effect].round(4),
                 hue=choose_group,
-                size=country_med["effect_perc"].round(4),
-                sizes=(120, 60),
+                s=100,
+                #size=country_med["effect_perc"].round(4),
+                #sizes=(120, 60),
                 data=country_med,
                 ax=ax
             )
-            ax.set_ylabel("Absolute change")
-            ax.set_title(f"Sensitvity of U5MR to {choose_factor} by income groups")
+            ax.set_ylabel(f"{choose_effect} change of U5MR")
+            ax.set_title(f"Sensitvity of U5MR to {choose_factor} by {choose_group}")
             for i in range(country_med.shape[0]):
                 if country_med.Entity[i] == years_df["Entity"].iloc[0]:
                     plt.text(x=country_med[choose_factor][i]+0.2, 
-                        y=country_med["effect_perc"][i], 
+                        y=country_med[choose_effect][i], 
                         s=country_med.Entity.iloc[i],   
                         fontdict=dict(color='black', size=10),
                         bbox=dict(facecolor='white', alpha=0.8))
