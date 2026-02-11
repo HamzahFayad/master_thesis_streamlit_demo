@@ -447,7 +447,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                 ax=ax
             )
             ax.set_ylabel(f"{choose_effect} on U5MR")
-            ax.set_title(f"Sensitvity of U5MR to {choose_factor} by {choose_group}")
+            ax.set_title(f"Sensitvity of U5MR by {choose_factor} ({choose_group})")
             for i in range(country_med.shape[0]):
                 if country_med.Entity[i] == years_df["Entity"].iloc[0]:
                     plt.text(x=country_med[choose_factor][i]+0.1, 
@@ -462,6 +462,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                 fig_marg_eff = sns.lmplot(data=country_med, x=choose_factor, y=focusQ, 
                                 col="world_income_group", hue="world_income_group", col_wrap=2, height=4, aspect=1.78)
                 fig_marg_eff.set_titles(template="{col_name}")
+                fig_marg_eff.fig.suptitle(f"Marginal Effects of {choose_factor} on U5MR depending on {choose_group}", fontsize=18, y=1.05)
                 fig_marg_eff.set_axis_labels(choose_factor, "U5MR per 1000")
                 st.pyplot(plt.gcf())    
     #-------------- 
