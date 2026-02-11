@@ -112,7 +112,7 @@ if years_select and country_select is not None:
         share_of_population_urban = lambda x: x["share_of_population_urban"] + (100 - x["share_of_population_urban"]) * (indicators["urban"] / 100),
         share_without_improved_water = lambda x: x["share_without_improved_water"] - (x["share_without_improved_water"] - 0) * (indicators["water"] / 100),      
         vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + (100 - x["vaccination_coverage_who_unicef"]) * (indicators["vaccination"] / 100),    
-        years_of_schooling = lambda x: x["years_of_schooling"] + (13 - x["years_of_schooling"]) * (indicators["school"] / 100)
+        years_of_schooling = lambda x: x["years_of_schooling"] + (14 - x["years_of_schooling"]) * (indicators["school"] / 100)
     )
     #NEW_TEST
     modified_global_df = orig_global_df.assign(
@@ -125,7 +125,7 @@ if years_select and country_select is not None:
         share_of_population_urban = lambda x: x["share_of_population_urban"] + (100 - x["share_of_population_urban"]) * (indicators["urban"] / 100),
         share_without_improved_water = lambda x: x["share_without_improved_water"] - (x["share_without_improved_water"] - 0) * (indicators["water"] / 100),      
         vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + (100 - x["vaccination_coverage_who_unicef"]) * (indicators["vaccination"] / 100),    
-        years_of_schooling = lambda x: x["years_of_schooling"] + (13 - x["years_of_schooling"]) * (indicators["school"] / 100)
+        years_of_schooling = lambda x: x["years_of_schooling"] + (14 - x["years_of_schooling"]) * (indicators["school"] / 100)
     )
     #modified_global_df
     #NEW_TEST
@@ -394,8 +394,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             ax.set_title(f"Reference vs. Simulated U5MR Prediction For {base_df['Entity'].iloc[0]}")
             st.pyplot(fig)
 
-    st.divider()
-    st.divider()
+
     # ----------------------------------
     # PART 3:
     # SHOW SENSITIVITY BY 1 FEATURE
@@ -403,37 +402,40 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     # AFTER SIMULATION
     #-----------------------------------
     if "changed_sliders" in st.session_state and st.session_state.changed_sliders:
+        st.divider()
+        st.divider()
         st.markdown(f"##### Indicator Sensitivity on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions*")
         focusQ = ""
     
+        #Choose factor, group, effect type
         list_features = st.session_state.changed_sliders
-        choose_factor = st.selectbox(label="Choose factor to view sensitivity", options=list_features, key="factor")
-        
+        choose_factor = st.selectbox(label="Sensitivity of factor:", options=list_features, key="factor")
         abs_eff_col, rel_eff_col = st.columns(2)
         with abs_eff_col:
-            choose_group = st.radio("Choose group comparison", ["world_income_group", "world_regions_wb"], horizontal=True, key="group")
+            choose_group = st.radio("Impact segmented by:", ["world_income_group", "world_regions_wb"], horizontal=True, key="group")
         with rel_eff_col:
-            choose_effect = st.radio("Choose absolute difference (per 1000) or relative difference (%)", ["absolute", "relative"], horizontal=True, key="effect")
+            choose_effect = st.radio("Absolute vs. Relative sensitivity:", ["absolute impact (per 1000)", "relative impact (%)"], horizontal=True, key="effect")
         
+        #Show Focus Quantile Scatterplot
         if focus_quant_025:
             focusQ = "pred_low"
+            st.markdown("<h4 style='text-align: center;'>Focus Quantile: Q0.25</h4>", unsafe_allow_html=True)
         elif focus_quant_05:
             focusQ = "pred_med"
+            st.markdown("<h4 style='text-align: center;'>Focus Quantile: Q0.5</h4>", unsafe_allow_html=True)
         else:
             focusQ = "pred_high"
+            st.markdown("<h4 style='text-align: center;'>Focus Quantile: Q0.75</h4>", unsafe_allow_html=True)
+        
         y_pred_orig_global = predicts_orig_global[focusQ]        
         y_pred_new_global =  predicts_new_global[focusQ]
-        
-        if choose_effect == "absolute":
+        if choose_effect == "absolute impact (per 1000)":
             predicts_new_global[choose_effect] = y_pred_new_global - y_pred_orig_global   #absolut
         else:
-            predicts_new_global[choose_effect] = (y_pred_new_global - y_pred_orig_global) / y_pred_orig_global * 100 #relativ
-        #std = predicts_new_global.groupby(choose_group)["effect_perc"].std()
-
-        country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby([choose_group, choose_factor, "Entity", focusQ])[choose_effect].mean().reset_index()
-        #country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby(["world_income_group", "years_of_schooling", "pred_high"])["effect_perc"].mean().reset_index()
+            predicts_new_global[choose_effect] = ((y_pred_new_global - y_pred_orig_global) / y_pred_orig_global) * 100 #relativ
+        country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby([choose_group, choose_factor, "Entity", focusQ])[choose_effect].mean().reset_index()        
         
-        #Sensitivity Plot
+        #Sensitivity Plot (Scatterplot)
         col_sens1, col_sens2, col_sens3 = st.columns([1, 10, 1])
         with col_sens2:
             fig, ax = plt.subplots(figsize=(12, 6))
@@ -442,22 +444,19 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                 y=country_med[choose_effect].round(4),
                 hue=choose_group,
                 s=100,
-                #size=country_med["effect_perc"].round(4),
-                #sizes=(120, 60),
                 data=country_med,
                 ax=ax
             )
-            ax.set_ylabel(f"{choose_effect} change of U5MR")
+            ax.set_ylabel(f"{choose_effect} on U5MR")
             ax.set_title(f"Sensitvity of U5MR to {choose_factor} by {choose_group}")
             for i in range(country_med.shape[0]):
                 if country_med.Entity[i] == years_df["Entity"].iloc[0]:
-                    plt.text(x=country_med[choose_factor][i]+0.2, 
+                    plt.text(x=country_med[choose_factor][i]+0.1, 
                         y=country_med[choose_effect][i], 
                         s=country_med.Entity.iloc[i],   
                         fontdict=dict(color='black', size=10),
                         bbox=dict(facecolor='white', alpha=0.8))
                     break
-            #plt.legend()
             st.pyplot(fig)
      
      

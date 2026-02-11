@@ -232,13 +232,13 @@ def build_sidebar(years_df, years_select, country_select):
         max_value=100.0, #float(max(0.0, 14.0 - years_df['years_of_schooling'].median())) if not years_df['years_of_schooling'].median() > 14.0 else 0.5,
         value=0.0,
         step=1.0,
-        disabled=years_df['years_of_schooling'].median() >= 13.0,
+        disabled=years_df['years_of_schooling'].median() >= 14.0,
         format="%.1f%%",
         key="years_of_schooling",
         help="Average number of years women aged 25 and older have spent in formal education."
         )
         current_val_school = years_df['years_of_schooling'].median()
-        new_val_school = current_val_school + (13 - current_val_school) * (slider_vars["school"] / 100)
+        new_val_school = current_val_school + (14 - current_val_school) * (slider_vars["school"] / 100)
         st.caption(
         f"**current**: {(current_val_school):.1f} school years | **new**: {(new_val_school):.1f} school years"
         )
