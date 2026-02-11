@@ -167,7 +167,7 @@ if years_select and country_select is not None:
     )  
     st.divider()
     # ----------------------------------
-    # PART 1:
+    # ___________PART 1___________
     # SHOW REFERENCE Q-MODELS PREDICTIONS 
     # WITHOUT ANY SIMULATION
     # PLUS QUANTILE FOCUS
@@ -248,7 +248,6 @@ if years_select and country_select is not None:
                 \nGlobally compared, **{base_df['Entity'].iloc[0]}** is among the {abs(-((bw_med_pos * 100) - (100-bw_med_pos))):.2f}% with the highest uncertainty.""")
     
 
-    #X_original
     # ----------------------------------
     # TABS: GLOBAL & LOCAL SHAP PLOT
     #----------------------------------- 
@@ -295,7 +294,7 @@ if years_select and country_select is not None:
     
 if st.session_state.simulate_btn and (years_select and country_select is not None):
     # ----------------------------------
-    # PART 2:
+    # ___________PART 2___________
     # SHOW Q-MODELS PREDICTIONS 
     # AFTER SIMULATION
     #----------------------------------- 
@@ -396,7 +395,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
 
 
     # ----------------------------------
-    # PART 3:
+    # ___________PART 3___________
     # SHOW SENSITIVITY BY 1 FEATURE
     # BY INCOME GROUPS   
     # AFTER SIMULATION
@@ -458,9 +457,13 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                         bbox=dict(facecolor='white', alpha=0.8))
                     break
             st.pyplot(fig)
-     
-     
-    
+
+            if choose_group == "world_income_group":
+                fig_marg_eff = sns.lmplot(data=country_med, x=choose_factor, y=focusQ, 
+                                col="world_income_group", hue="world_income_group", col_wrap=2, height=4, aspect=1.78)
+                fig_marg_eff.set_titles(template="{col_name}")
+                fig_marg_eff.set_axis_labels(choose_factor, "U5MR per 1000")
+                st.pyplot(plt.gcf())    
     #-------------- 
     #--------------   
     #--------------   
