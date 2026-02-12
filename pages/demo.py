@@ -230,7 +230,6 @@ if years_select and country_select is not None:
         if focus_quant_075:
             with st.container():
                 st.error("Focus Quantile")
-     
     # ----------------------------------
     # FOCUS QUANTILES EXPLAINED
     #-----------------------------------            
@@ -298,7 +297,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     # SHOW Q-MODELS PREDICTIONS 
     # AFTER SIMULATION
     #----------------------------------- 
-    st.markdown(f"##### After indicator adjustments, :orange[{base_df['Entity'].iloc[0]}'s] simulated prediction of U5MR for {' | '.join(map(str, sorted(years_select)))}")
+    st.markdown(f"##### After indicator adjustments, :orange[{base_df['Entity'].iloc[0]}'s] simulated prediction of U5MR for {' | '.join(map(str, sorted(years_select)))} might have been")
     
     #prevent quantile crossing
     q25_new = np.minimum(predicts_new['pred_low'], predicts_new['pred_med'] - (1e-6))
@@ -405,6 +404,9 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
         st.divider()
         st.markdown(f"##### Indicator Sensitivity on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions*")
         focusQ = ""
+        
+        if len(st.session_state.changed_sliders) > 1:
+            st.info(f"Since more than one factor were changed [{', '.join(st.session_state.changed_sliders)}], the plots show the sensitivity taking into account all active sliders.")
     
         #Choose factor, group, effect type
         list_features = st.session_state.changed_sliders
@@ -414,7 +416,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             choose_group = st.radio("Impact segmented by:", ["world_income_group", "world_regions_wb"], horizontal=True, key="group")
         with rel_eff_col:
             choose_effect = st.radio("Absolute vs. Relative sensitivity:", ["absolute impact (per 1000)", "relative impact (%)"], horizontal=True, key="effect")
-        
+                
         #Show Focus Quantile Scatterplot
         if focus_quant_025:
             focusQ = "pred_low"
@@ -447,7 +449,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                 ax=ax
             )
             ax.set_ylabel(f"{choose_effect} on U5MR")
-            ax.set_title(f"Sensitvity of U5MR by {choose_factor} ({choose_group})")
+            ax.set_title(f"Sensitvity of U5MR by {choose_factor}")
             for i in range(country_med.shape[0]):
                 if country_med.Entity[i] == years_df["Entity"].iloc[0]:
                     plt.text(x=country_med[choose_factor][i]+0.1, 
@@ -462,9 +464,15 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                 fig_marg_eff = sns.lmplot(data=country_med, x=choose_factor, y=focusQ, 
                                 col="world_income_group", hue="world_income_group", col_wrap=2, height=4, aspect=1.78)
                 fig_marg_eff.set_titles(template="{col_name}")
-                fig_marg_eff.fig.suptitle(f"Marginal Effects of {choose_factor} on U5MR depending on {choose_group}", fontsize=18, y=1.05)
+                fig_marg_eff.fig.suptitle(f"Conditional Effects of {choose_factor} on U5MR by {choose_group}", fontsize=18, y=1.05)
                 fig_marg_eff.set_axis_labels(choose_factor, "U5MR per 1000")
-                st.pyplot(plt.gcf())    
+                st.pyplot(plt.gcf())  
+                
+                #Compare with other countries
+                st.multiselect(label=f"Compare {years_df['Entity'].iloc[0]} with other countries",
+                                options=df_ref["Entity"].unique().tolist(),
+                                max_selections=2,
+                                placeholder="Countries")  
     #-------------- 
     #--------------   
     #--------------   

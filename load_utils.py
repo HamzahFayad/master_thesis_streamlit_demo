@@ -36,6 +36,7 @@ def load_df():
  
 #Features
 DEFAULTS = {
+    #"gdp_per_capita_worldbank": 0.0,
     "nurses_and_midwives_per_1000_people": 0.0, 
     "physicians_per_1000_people": 0.0, 
     "prevalence_of_undernourishment": 0.0, 
@@ -344,7 +345,11 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
     with col2:
         #shap.initjs()
         fig, ax = plt.subplots(figsize=(12, 6))
-        shap.plots.waterfall(shapvals[id], max_display=15, show=False)
+        mask = shapvals[id].values != 0
+        single_shap_value = shapvals[id]
+        relevant_indices = np.where(np.abs(single_shap_value.values) > 1e-9)[0]
+        filtered_shap_values = single_shap_value[relevant_indices]
+        shap.plots.waterfall(filtered_shap_values, max_display=12, show=False)
          
         for ax in fig.axes:
             ax.set_xlabel("")  
@@ -441,7 +446,7 @@ def st_shap(plot, height=None):
     
 def force_plot(qr_models, X, quant, title):
     X_transformed, new_feature_names, shapvals = create_shap_by_models(qr_models, X, quant)
-    force_p = shap.plots.force(shapvals[0:150])
+    force_p = shap.plots.force(shapvals[0:])
     st_shap(force_p, height=400)
 
 

@@ -21,8 +21,11 @@ about = '''
         socioeconomic and health-related indicators on child mortality rate per country.
         In order for this simulation tool to work a regression-based supervised machine learning approach was applied on a country-level dataset to retrospectively predict under-five mortality rates.
         The final base dataset included 193 countries of 6 samples each from 2013 to 2018.
-              
-        Due to the highly sensitive topic and the use of only aggregated country-level data within a small period,
+        
+        A linear QuantileRegressor model with 3 quantiles {0.25, 0.5, 0.75} is used to make U5MR predictions at country-level.
+        The quantiles showcase uncertainty in the models' prediction. In addition, interaction terms (feature x income group) are used for effects per group to view different effects between High- and Low-income countries. 
+         
+        Due to the use of a Machine Learning model with a limited feature set, the highly sensitive topic and the use of only aggregated country-level data within a small period,
         this tool does not provide causal effects but rather just potential correlations between features and the target.
         It can provide first insights on which indicator has a big effect on the target value based on the chosen countrys' income group.
         
