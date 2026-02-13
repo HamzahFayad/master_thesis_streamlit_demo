@@ -65,8 +65,8 @@ slider_vars = {
 def build_sidebar(years_df, years_select, country_select):
     if years_select and country_select is not None:
         st.divider()
-        st.subheader(f"Adjust indicators to simulate hypothetical scenarios of child mortality rate in: :orange[*{country_select}*] \u2193")
-        st.markdown('<h5 style="font-weight: 400;"><em>(changes affect all selected years)</em></h5>', unsafe_allow_html=True)
+        st.subheader(f"Adjust* indicators to simulate hypothetical scenarios of child mortality rate in: :orange[*{country_select}*] \u2193")
+        st.markdown('<h5 style="font-weight: 400;"><em>*changes affect all selected years</em></h5>', unsafe_allow_html=True)
         st.space()
             
         #-------------------------------------------------
@@ -89,7 +89,7 @@ def build_sidebar(years_df, years_select, country_select):
             
         #GDP per capita
         slider_vars["gdp"] = st.slider(
-        "Increase :orange[*gross domestic product (GDP) per capita*]",
+        ":material/balance: Increase :orange[*gross domestic product (GDP) per capita*]",
         min_value=0.0,
         max_value=100.0,
         value=0.0,
@@ -107,7 +107,7 @@ def build_sidebar(years_df, years_select, country_select):
         
         #Nurses & midwives per 1000
         slider_vars["nm"] = st.slider(
-        "Increase :orange[*nurses/midwives per 1000 people*] (%)",
+        ":material/baby_changing_station: Increase :orange[*nurses/midwives per 1000 people*] (%)",
         min_value=0.0,
         max_value=100.0,
         value=0.0,
@@ -125,7 +125,7 @@ def build_sidebar(years_df, years_select, country_select):
             
         #Physicians per 1000
         slider_vars["phys"] = st.slider(
-        "Increase :orange[*physicians per 1000 people*] (%)",
+        ":material/local_hospital: Increase :orange[*physicians per 1000 people*] (%)",
         min_value=0.0,
         max_value=100.0,
         value=0.0,
@@ -143,7 +143,7 @@ def build_sidebar(years_df, years_select, country_select):
             
         #vaccination coverage 
         slider_vars["vaccination"] = st.slider(
-        "Increase :orange[*vaccination coverage*] (%)",
+        ":material/syringe: Increase :orange[*vaccination coverage*] (%)",
         min_value=0.0,
         max_value=100.0, #- float(years_df["vaccination_coverage_who_unicef"].max()),
         value=0.0,
@@ -165,7 +165,7 @@ def build_sidebar(years_df, years_select, country_select):
             
         #Share of population urban 
         slider_vars["urban"] = st.slider(
-        "Increase :orange[*share of population urban*] (%)",
+        ":material/apartment: Increase :orange[*share of population urban*] (%)",
         min_value=0.0,
         max_value=100.0, #- float(years_df["share_of_population_urban"].max()) if not years_df['share_of_population_urban'].median() >= 100.0 else 0.5,
         #max_value=float(100.0 / years_df["share_of_population_urban"].median() -1) * 100, #50.0,
@@ -185,7 +185,7 @@ def build_sidebar(years_df, years_select, country_select):
             
         #Prevalence of undernourishment
         slider_vars["undernourishment"] = st.slider(
-        "Decrease :orange[*prevalence of undernourishment*] (%)",
+        ":material/dining: Decrease :orange[*prevalence of undernourishment*] (%)",
         #min_value=-100.0,
         min_value=0.0, #-float(years_df['prevalence_of_undernourishment'].min()),
         max_value=100.0,
@@ -205,7 +205,7 @@ def build_sidebar(years_df, years_select, country_select):
 
         #Share without improved water 
         slider_vars["water"] = st.slider(
-        "Decrease :orange[*share of population without improved water*] (%)",
+        ":material/water_drop: Decrease :orange[*share of population without improved water*] (%)",
         #min_value=-float(years_df['share_without_improved_water'].min()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
         min_value= 0.0, #-float(years_df['share_without_improved_water'].median()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
         max_value=100.0,
@@ -228,7 +228,7 @@ def build_sidebar(years_df, years_select, country_select):
             
         #years of schooling 
         slider_vars["school"] = st.slider(
-        "Increase :orange[*years of schooling*] (%)",
+        ":material/school: Increase :orange[*years of schooling*] (%)",
         min_value=0.0,
         max_value=100.0, #float(max(0.0, 14.0 - years_df['years_of_schooling'].median())) if not years_df['years_of_schooling'].median() > 14.0 else 0.5,
         value=0.0,
@@ -349,7 +349,7 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
         single_shap_value = shapvals[id]
         relevant_indices = np.where(np.abs(single_shap_value.values) > 1e-9)[0]
         filtered_shap_values = single_shap_value[relevant_indices]
-        shap.plots.waterfall(filtered_shap_values, max_display=12, show=False)
+        shap.plots.waterfall(filtered_shap_values, max_display=14, show=False)
          
         for ax in fig.axes:
             ax.set_xlabel("")  

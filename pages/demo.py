@@ -251,7 +251,8 @@ if years_select and country_select is not None:
     # TABS: GLOBAL & LOCAL SHAP PLOT
     #----------------------------------- 
     st.space()
-    tab_global, tab_local = st.tabs(["Context View", "Local View"])
+    #tab_global, tab_local = st.tabs(["Context View", "Local View"])
+    tab_base = st.radio("",["Context View", "Local View"], horizontal=True, label_visibility="collapsed")
     global_beeswarm = f":orange[How the features affect the predictions for {base_df['world_income_group'].iloc[-1]} similar to **{base_df['Entity'].iloc[0]}**]"
     local_waterfall = f":orange[How the features affect the prediction for one year data sample of **{base_df['Entity'].iloc[0]}**]"
     shap_by_region = df_ref.copy()
@@ -260,34 +261,31 @@ if years_select and country_select is not None:
     choice_years = years_df["Year"].tolist()
     choice_year_label = "Choose year to view the specific local features' influence on the prediction"
     
-    if focus_quant_025:
-        with tab_global:
+    if tab_base == "Context View":
+        if focus_quant_025:
             st.write(global_beeswarm)
             shap_plot(qr_models, shap_by_income, "low", "Focus Quantile 0.25")
-            #shap_bar_plot(qr_models, shap_by_income, "low", "High Income (Focus Quantile 0.25)")
-        with tab_local:
-            st.write(local_waterfall)     
-            year_choice_orig1 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig1")
-            shap_decision_plot(qr_models, X_original, "low", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.25)", predicts_original["pred_low"], choice_years.index(year_choice_orig1))
-            #force_plot(qr_models, X_original, "low", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.25)")  
-        
-    elif focus_quant_05:
-        with tab_global:
+        elif focus_quant_05:
             st.write(global_beeswarm)
             shap_plot(qr_models, shap_by_income, "med", "Focus Quantile 0.5")
-        with tab_local:
+        else:
+            st.write(global_beeswarm)
+            shap_plot(qr_models, shap_by_income, "high", "Focus Quantile 0.75")
+    
+    elif tab_base == "Local View":
+        if focus_quant_025:
+            st.write(local_waterfall)     
+            year_choice_orig1 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig11")
+            shap_decision_plot(qr_models, X_original, "low", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.25)", predicts_original["pred_low"], choice_years.index(year_choice_orig1))
+        elif focus_quant_05:
             st.write(local_waterfall)
             year_choice_orig2 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig2")
             shap_decision_plot(qr_models, X_original, "med", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.5)", predicts_original["pred_med"], choice_years.index(year_choice_orig2))
-
-    else:
-        with tab_global:
-            st.write(global_beeswarm)
-            shap_plot(qr_models, shap_by_income, "high", "Focus Quantile 0.75")
-        with tab_local:
+        else:
             st.write(local_waterfall)
             year_choice_orig3 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_orig3")
-            shap_decision_plot(qr_models, X_original, "high", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.75)", predicts_original["pred_high"], choice_years.index(year_choice_orig3))   
+            shap_decision_plot(qr_models, X_original, "high", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.75)", predicts_original["pred_high"], choice_years.index(year_choice_orig3))       
+        
     st.divider()       
     st.divider()
     
@@ -382,8 +380,8 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     with col2:
         if len(predicts_original["Year"]) > 1:
             fig, ax = plt.subplots(figsize=(12, 6))
-            sns.lineplot(data=df_preds, x="base_year", y="base_q05", label="base median prediction", linewidth=3)
-            sns.lineplot(data=df_preds, x="whatif_year", y="whatif_q05", label="simulated median prediction", linewidth=3)
+            sns.lineplot(data=df_preds, x="base_year", y="base_q05", label="base median prediction", linewidth=3, ax=ax)
+            sns.lineplot(data=df_preds, x="whatif_year", y="whatif_q05", label="simulated median prediction", linewidth=3, ax=ax)
             ax.fill_between(df_preds["base_year"], df_preds["base_q025"], df_preds["base_q075"], alpha=0.25)
             ax.fill_between(df_preds["whatif_year"], df_preds["whatif_q025"], df_preds["whatif_q075"], alpha=0.25)
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -402,11 +400,11 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     if "changed_sliders" in st.session_state and st.session_state.changed_sliders:
         st.divider()
         st.divider()
-        st.markdown(f"##### Indicator Sensitivity on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions*")
+        st.markdown(f"##### Indicator Sensitivity on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions* (including the samples [{', '.join(map(str, sorted(years_select)))}] per country)")
         focusQ = ""
         
         if len(st.session_state.changed_sliders) > 1:
-            st.info(f"Since more than one factor were changed [{', '.join(st.session_state.changed_sliders)}], the plots show the sensitivity taking into account all active sliders.")
+            st.info(f"Since more than one factor were changed *[**{', '.join(st.session_state.changed_sliders)}**]*, the plots show the sensitivity taking into account all active sliders.")
     
         #Choose factor, group, effect type
         list_features = st.session_state.changed_sliders
@@ -459,20 +457,57 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                         bbox=dict(facecolor='white', alpha=0.8))
                     break
             st.pyplot(fig)
-
+            
             if choose_group == "world_income_group":
+                # sensitivity of chosen country and avg of income groups as comparison (focus quantile)
+                sens_col1, sens_col2 = st.columns(2, border=True) 
+                avg_country = country_med.loc[country_med['Entity']==country_select][choose_effect].mean()
+                income_of_country = country_med.loc[country_med['Entity']==country_select]["world_income_group"].iloc[-1]
+                avg_income_of_country = country_med[country_med['world_income_group'] == income_of_country][choose_effect].mean()
+                with sens_col1:
+                    st.metric(
+                        label=f"{income_of_country} average U5MR reduction", 
+                        value=f"{avg_income_of_country:.2f}",
+                    )
+                    with st.container():
+                        st.caption(choose_effect)
+                with sens_col2:
+                    st.metric(
+                        label=f"U5MR reduction for {country_select}",
+                        value=f"{avg_country:.2f}",
+                        #delta=f"{(avg_country - avg_lowincome):.2f}"
+                    )
+                    with st.container():
+                        st.caption(choose_effect)
+                        
+                others = country_med[~(country_med['world_income_group'] == income_of_country)]
+                other_income_c = others["world_income_group"].unique() 
+                sens_cols = st.columns(len(other_income_c), border=True) 
+                
+                for col, n in zip(sens_cols, other_income_c):
+                    with col:
+                        income_g = others[others["world_income_group"] == n]
+                        current_value = income_g[choose_effect].mean()
+                        st.metric(
+                            label=f"{n}",
+                            value=f"{current_value:.2f}"
+                        )
+                        with st.container():
+                            st.caption(choose_effect)
+                            
+                #Sensitivity conditional effects by income groups            
                 fig_marg_eff = sns.lmplot(data=country_med, x=choose_factor, y=focusQ, 
-                                col="world_income_group", hue="world_income_group", col_wrap=2, height=4, aspect=1.78)
+                                            col="world_income_group", hue="world_income_group", col_wrap=2, height=4, aspect=1.78)
                 fig_marg_eff.set_titles(template="{col_name}")
                 fig_marg_eff.fig.suptitle(f"Conditional Effects of {choose_factor} on U5MR by {choose_group}", fontsize=18, y=1.05)
                 fig_marg_eff.set_axis_labels(choose_factor, "U5MR per 1000")
                 st.pyplot(plt.gcf())  
                 
                 #Compare with other countries
-                st.multiselect(label=f"Compare {years_df['Entity'].iloc[0]} with other countries",
-                                options=df_ref["Entity"].unique().tolist(),
-                                max_selections=2,
-                                placeholder="Countries")  
+                #st.multiselect(label=f"Compare {years_df['Entity'].iloc[0]} with other countries",
+                #                options=df_ref["Entity"].unique().tolist(),
+                #                max_selections=2,
+                #                placeholder="Countries")  
     #-------------- 
     #--------------   
     #--------------   
