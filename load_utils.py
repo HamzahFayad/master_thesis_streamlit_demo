@@ -101,6 +101,24 @@ def build_sidebar(years_df, years_select, country_select):
         f"~ {(years_df['gdp_per_capita_worldbank'].median() * (1 + slider_vars['gdp'] / 100)):.2f} int. $, PPP"
         )  
         st.space()
+        
+        #Healthspending/GDP ratio
+        slider_vars["health_gdp"] = st.slider(
+        ":material/balance: Increase ratio :orange[*healthspending / gdp per capita*]",
+        min_value=0.0,
+        max_value=100.0,
+        value=0.0,
+        step=1.0,
+        format="%.1f%%",
+        key="health_gdp",
+        help="Average economic output per person in a country or region per year. This data is adjusted for inflation and differences in living costs between countries."
+        )
+        current_health_gdp = years_df['annual_healthcare_expenditure_per_capita'].median() / years_df['gdp_per_capita_worldbank'].median()
+        new_health_gdp = current_health_gdp + (0.20 - current_health_gdp) * (slider_vars["health_gdp"] / 100)
+        st.caption(
+        f"~ **current**: {(current_health_gdp):.2f} | **new**: {(new_health_gdp):.2f}"
+        )  
+        st.space()
             
         #-------------------------------------------------
         st.markdown("#### Medical Health:")
@@ -241,6 +259,7 @@ def build_sidebar(years_df, years_select, country_select):
         current_val_school = years_df['years_of_schooling'].median()
         new_val_school = current_val_school + (14 - current_val_school) * (slider_vars["school"] / 100)
         st.caption(
+        #f"**current**: {(current_val_school):.1f} school years {f'| **new**: {(new_val_school):.1f} school years' if new_val_school != current_val_school else '' }"
         f"**current**: {(current_val_school):.1f} school years | **new**: {(new_val_school):.1f} school years"
         )
         st.space()

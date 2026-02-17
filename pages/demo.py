@@ -165,6 +165,7 @@ if years_select and country_select is not None:
         pred_med  = qr_models["med"].predict(X_new_others) + SHIFT["q50"],
         pred_high = qr_models["high"].predict(X_new_others) + SHIFT["q75"]
     )  
+
     st.divider()
     # ----------------------------------
     # ___________PART 1___________
@@ -173,9 +174,9 @@ if years_select and country_select is not None:
     # PLUS QUANTILE FOCUS
     #----------------------------------- 
 
-    q05_pos = predicts_original["q05_pos"].min()
-    bw_med = predicts_original["bandwidth"].min()
-    bw_med_pos = predicts_original["bandwidth_pos"].min()
+    q05_pos = predicts_original["q05_pos"].mean()
+    bw_med = predicts_original["bandwidth"].mean()
+    bw_med_pos = predicts_original["bandwidth_pos"].mean()
     
     st.markdown(f"##### :orange[{base_df['Entity'].iloc[0]}'s] reference predicted child mortality rate for {' | '.join(map(str, sorted(years_select)))}")
     st.write(f"Based on a global reference, the corresponding quantile prediction specific to {base_df['Entity'].iloc[0]} in comparison to the remaining data is highlighted.")
@@ -235,15 +236,17 @@ if years_select and country_select is not None:
     #-----------------------------------            
     if focus_quant_025 == True:
         st.info(f"""Why is the Q0.25 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is relatively low.
-                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is only {bw_med:.2f}. Thus the outcome seems robust. 
+                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is only {bw_med:.2f} per 1000. 
+                \nThus the outcome seems robust. 
                 \nGlobally compared, **{base_df['Entity'].iloc[0]}** is among the {(bw_med_pos * 100):.2f}% with the lowest uncertainty.""")
     if focus_quant_05 == True:
         st.warning(f"""Why is the Q0.5 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is moderate.
-                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f}. 
+                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f} per 1000. 
                 \nGlobally compared, around {(bw_med_pos * 100):.2f}% of the remaining country data samples are below this uncertainty range.""")
     if focus_quant_075 == True:
         st.error(f"""Why is the Q0.75 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is relatively high.
-                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f}. Thus the outcome seems more risky. 
+                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f} per 1000.
+                \nThus the outcome seems more risky. 
                 \nGlobally compared, **{base_df['Entity'].iloc[0]}** is among the {abs(-((bw_med_pos * 100) - (100-bw_med_pos))):.2f}% with the highest uncertainty.""")
     
 
@@ -374,7 +377,9 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     "base_q075": q75_pred,
     "whatif_q075": q75_new,
     "base_year": predicts_original["Year"],
-    "whatif_year": predicts_new["Year"]
+    "whatif_year": predicts_new["Year"],
+    'band_width_base': np.array(q75_pred) - np.array(q25_pred),
+    'band_width_whatif': np.array(q75_new) - np.array(q25_new)
     })    
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
@@ -389,7 +394,24 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             ax.set_xlabel("Year")
             ax.set_title(f"Reference vs. Simulated U5MR Prediction For {base_df['Entity'].iloc[0]}")
             st.pyplot(fig)
-
+        
+        #st.write(df_preds["band_width_base"])
+        #st.write(df_preds["band_width_whatif"])
+        base_bandwidth = df_preds['band_width_base'].mean().round(2)
+        new_bandwidth = df_preds['band_width_whatif'].mean().round(2)
+        
+        #st.write(f"Uncertainty without feature simulations: {df_preds['band_width_base']}")
+        #st.write(f"Uncertainty after your feature simulations: {df_preds['band_width_whatif']}")
+        
+        #Uncertainty change for chosen country
+        st.write(f"The uncertainty without feature simulations: {bw_med.round(2)} per 1000")
+        st.write(f"The uncertainty changes with your feature simulations: {new_bandwidth} per 1000 ({((new_bandwidth-base_bandwidth).round(2))})")
+        
+        #Uncertainity change by income groups   
+        bandwidth_orig_global_avg = (predicts_orig_global['pred_high'] - predicts_orig_global['pred_low']).groupby(predicts_orig_global['world_income_group']).mean().round(2)     
+        bandwidth_new_global_avg = (predicts_new_global['pred_high'] - predicts_new_global['pred_low']).groupby(predicts_new_global['world_income_group']).mean().round(2)
+        st.write(f"{bandwidth_orig_global_avg}")
+        st.write(f"{bandwidth_new_global_avg} ({bandwidth_new_global_avg - bandwidth_orig_global_avg})")
 
     # ----------------------------------
     # ___________PART 3___________
