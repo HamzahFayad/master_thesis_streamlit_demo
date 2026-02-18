@@ -87,7 +87,7 @@ else:
 #-----------------------------------
 modified_df = years_df.copy()
 
-#NEW_TEST
+#global df
 orig_global_df = df_ref.copy()
 modified_global_df = df_ref.copy()
 
@@ -114,7 +114,7 @@ if years_select and country_select is not None:
         vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + (100 - x["vaccination_coverage_who_unicef"]) * (indicators["vaccination"] / 100),    
         years_of_schooling = lambda x: x["years_of_schooling"] + (14 - x["years_of_schooling"]) * (indicators["school"] / 100)
     )
-    #NEW_TEST
+    #global new prediction all countries
     modified_global_df = orig_global_df.assign(
         annual_healthcare_expenditure_per_capita = lambda x: x["annual_healthcare_expenditure_per_capita"] * (1 + indicators["ahec"] / 100),
         gdp_per_capita_worldbank = lambda x: x["gdp_per_capita_worldbank"] * (1 + indicators["gdp"] / 100),
@@ -127,8 +127,6 @@ if years_select and country_select is not None:
         vaccination_coverage_who_unicef = lambda x: x["vaccination_coverage_who_unicef"] + (100 - x["vaccination_coverage_who_unicef"]) * (indicators["vaccination"] / 100),    
         years_of_schooling = lambda x: x["years_of_schooling"] + (14 - x["years_of_schooling"]) * (indicators["school"] / 100)
     )
-    #modified_global_df
-    #NEW_TEST
     
     # ----------------------------------
     # Q-MODELS PREDICTIONS WITH ORIGINAL DF
@@ -236,25 +234,22 @@ if years_select and country_select is not None:
     #-----------------------------------            
     if focus_quant_025 == True:
         st.info(f"""Why is the Q0.25 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is relatively low.
-                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is only {bw_med:.2f} per 1000. 
-                \nThus the outcome seems robust. 
+                \nThe prediction range between 'bottom 0.25 quantile' and 'top 0.75 quantile' is only {bw_med:.2f} per 1000. Thus the outcome seems robust. 
                 \nGlobally compared, **{base_df['Entity'].iloc[0]}** is among the {(bw_med_pos * 100):.2f}% with the lowest uncertainty.""")
     if focus_quant_05 == True:
         st.warning(f"""Why is the Q0.5 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is moderate.
-                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f} per 1000. 
+                \nThe prediction range between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f} per 1000. 
                 \nGlobally compared, around {(bw_med_pos * 100):.2f}% of the remaining country data samples are below this uncertainty range.""")
     if focus_quant_075 == True:
         st.error(f"""Why is the Q0.75 quantile the focus? For **{base_df['Entity'].iloc[0]}** the prediction uncertainty is relatively high.
-                \nThe range of the prediction between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f} per 1000.
-                \nThus the outcome seems more risky. 
+                \nThe prediction range between 'bottom 0.25 quantile' and 'top 0.75 quantile' is {bw_med:.2f} per 1000. Thus the outcome seems more risky. 
                 \nGlobally compared, **{base_df['Entity'].iloc[0]}** is among the {abs(-((bw_med_pos * 100) - (100-bw_med_pos))):.2f}% with the highest uncertainty.""")
     
 
     # ----------------------------------
-    # TABS: GLOBAL & LOCAL SHAP PLOT
+    # SWITCH: GLOBAL & LOCAL SHAP PLOT
     #----------------------------------- 
     st.space()
-    #tab_global, tab_local = st.tabs(["Context View", "Local View"])
     tab_base = st.radio("",["Context View", "Local View"], horizontal=True, label_visibility="collapsed")
     global_beeswarm = f":orange[How the features affect the predictions for {base_df['world_income_group'].iloc[-1]} similar to **{base_df['Entity'].iloc[0]}**]"
     local_waterfall = f":orange[How the features affect the prediction for one year data sample of **{base_df['Entity'].iloc[0]}**]"
@@ -350,7 +345,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     tab_local_new = st.tabs(["Local View"])[0] 
     
     # ----------------------------------
-    # SHOW SHAP PLOT  
+    # SHOW LOCAL SHAP PLOT  
     # AFTER SIMULATION
     #----------------------------------- 
     chart_by_income = df_ref.loc[df_ref["world_income_group"] == X_original["world_income_group"].iloc[-1]]
@@ -366,9 +361,11 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
         else:
             year_choice_new3 = st.selectbox(label=choice_year_label, options=choice_years, key="year_choice_new3")
             shap_decision_plot(qr_models, X_new, "high", f"{base_df['Entity'].iloc[0]} (Focus Quantile 0.75)", predicts_new["pred_high"], choice_years.index(year_choice_new3))
-            #st.line_chart(chart_by_income, x="", y="")
-            #chart_by_income
      
+    # ----------------------------------
+    # SHOW LINE PLOT PRED. WITH UNCERT.  
+    # BEFORE AND AFTER SIMULATION FOR COUNTRY
+    #----------------------------------- 
     df_preds = pd.DataFrame({
     "base_q025": q25_pred,
     "whatif_q025": q25_new,
@@ -394,25 +391,44 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             ax.set_xlabel("Year")
             ax.set_title(f"Reference vs. Simulated U5MR Prediction For {base_df['Entity'].iloc[0]}")
             st.pyplot(fig)
-        
-        #st.write(df_preds["band_width_base"])
-        #st.write(df_preds["band_width_whatif"])
-        base_bandwidth = df_preds['band_width_base'].mean().round(2)
-        new_bandwidth = df_preds['band_width_whatif'].mean().round(2)
-        
-        #st.write(f"Uncertainty without feature simulations: {df_preds['band_width_base']}")
-        #st.write(f"Uncertainty after your feature simulations: {df_preds['band_width_whatif']}")
+
+    # ----------------------------------
+    # SHOW AVG UNCERTAINTY CHANGE  
+    # PER INCOME GROUP AFTER SIMULATION
+    #----------------------------------- 
         
         #Uncertainty change for chosen country
-        st.write(f"The uncertainty without feature simulations: {bw_med.round(2)} per 1000")
-        st.write(f"The uncertainty changes with your feature simulations: {new_bandwidth} per 1000 ({((new_bandwidth-base_bandwidth).round(2))})")
+        base_bandwidth = df_preds['band_width_base'].mean().round(2)
+        new_bandwidth = df_preds['band_width_whatif'].mean().round(2)
+        st.markdown(f"###### :orange[{base_df['Entity'].iloc[0]}'s] uncertainty before feature simulations: {bw_med.round(2)} per 1000")
+        st.markdown(f"###### :orange[{base_df['Entity'].iloc[0]}'s] uncertainty  after feature simulations: {new_bandwidth} per 1000 ({((new_bandwidth-base_bandwidth).round(2))})")
         
-        #Uncertainity change by income groups   
+        #Average Uncertainity change by income groups 
         bandwidth_orig_global_avg = (predicts_orig_global['pred_high'] - predicts_orig_global['pred_low']).groupby(predicts_orig_global['world_income_group']).mean().round(2)     
-        bandwidth_new_global_avg = (predicts_new_global['pred_high'] - predicts_new_global['pred_low']).groupby(predicts_new_global['world_income_group']).mean().round(2)
-        st.write(f"{bandwidth_orig_global_avg}")
-        st.write(f"{bandwidth_new_global_avg} ({bandwidth_new_global_avg - bandwidth_orig_global_avg})")
+        bandwidth_new_global_avg = (predicts_new_global['pred_high'] - predicts_new_global['pred_low']).groupby(predicts_new_global['world_income_group']).mean().round(2)  
+        unc_plot = pd.DataFrame({
+            "Group": bandwidth_orig_global_avg.index,
+            "Original": bandwidth_orig_global_avg.values,
+            "New": bandwidth_new_global_avg.values,
+            "Delta": (bandwidth_new_global_avg - bandwidth_orig_global_avg).values
+        }).sort_values(by="Delta", ascending=False)
 
+        plt.figure(figsize=(10, 6))
+        plt.hlines(y=unc_plot["Group"], xmin=unc_plot["Original"], xmax=unc_plot["New"], 
+                color='grey', alpha=0.5, linewidth=2)
+        sns.scatterplot(data=unc_plot, x="Original", y="Group", color="red", label="uncertainty before simulation", s=120)
+        sns.scatterplot(data=unc_plot, x="New", y="Group", color="green", label="uncertainty after simulation", s=120)
+        for i in range(unc_plot.shape[0]):
+            delta_val = unc_plot["Delta"].iloc[i]
+            plt.text(unc_plot["New"].iloc[i] + 0.01, i - 0.15, 
+                    f"{delta_val:+.2f}", va="center", fontweight="bold")
+
+        plt.title("Average change of the uncertainty per income group")
+        plt.xlabel("Uncertainty (Q0.75 - Q0.25)")
+        plt.legend()
+        st.pyplot(plt)
+        
+        
     # ----------------------------------
     # ___________PART 3___________
     # SHOW SENSITIVITY BY 1 FEATURE
@@ -518,12 +534,12 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                             st.caption(choose_effect)
                             
                 #Sensitivity conditional effects by income groups            
-                fig_marg_eff = sns.lmplot(data=country_med, x=choose_factor, y=focusQ, 
-                                            col="world_income_group", hue="world_income_group", col_wrap=2, height=4, aspect=1.78)
-                fig_marg_eff.set_titles(template="{col_name}")
-                fig_marg_eff.fig.suptitle(f"Conditional Effects of {choose_factor} on U5MR by {choose_group}", fontsize=18, y=1.05)
-                fig_marg_eff.set_axis_labels(choose_factor, "U5MR per 1000")
-                st.pyplot(plt.gcf())  
+                #fig_marg_eff = sns.lmplot(data=country_med, x=choose_factor, y=focusQ, 
+                #                            col="world_income_group", hue="world_income_group", col_wrap=2, height=4, aspect=1.78)
+                #fig_marg_eff.set_titles(template="{col_name}")
+                #fig_marg_eff.fig.suptitle(f"Conditional Effects of {choose_factor} on U5MR by {choose_group}", fontsize=18, y=1.05)
+                #fig_marg_eff.set_axis_labels(choose_factor, "U5MR per 1000")
+                #st.pyplot(plt.gcf())  
                 
                 #Compare with other countries
                 #st.multiselect(label=f"Compare {years_df['Entity'].iloc[0]} with other countries",
