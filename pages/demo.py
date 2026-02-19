@@ -103,9 +103,8 @@ if years_select and country_select is not None:
     # NEW CHANGED DF FOR PREDICTION
     #-----------------------------------
     modified_df = years_df.assign(
-        annual_healthcare_expenditure_per_capita = lambda x: x["annual_healthcare_expenditure_per_capita"] * (1 + indicators["ahec"] / 100),
-        gdp_per_capita_worldbank = lambda x: x["gdp_per_capita_worldbank"] * (1 + indicators["gdp"] / 100),
-        
+        annual_healthcare_expenditure_per_capita = lambda x: x["annual_healthcare_expenditure_per_capita"] + (10200 - x["annual_healthcare_expenditure_per_capita"]) * (indicators["ahec"] / 100), 
+        gdp_per_capita_worldbank = lambda x: x["gdp_per_capita_worldbank"] + (140000 - x["gdp_per_capita_worldbank"]) * (indicators["gdp"] / 100), 
         nurses_and_midwives_per_1000_people = lambda x: x["nurses_and_midwives_per_1000_people"] + (21 - x["nurses_and_midwives_per_1000_people"]) * (indicators["nm"] / 100), #* (1 + indicators["nm"] / 100),
         physicians_per_1000_people = lambda x: x["physicians_per_1000_people"] + (9 - x["physicians_per_1000_people"]) * (indicators["phys"] / 100),      
         prevalence_of_undernourishment = lambda x: x["prevalence_of_undernourishment"] - (x["prevalence_of_undernourishment"] - 0) * (indicators["undernourishment"] / 100), 
@@ -116,9 +115,8 @@ if years_select and country_select is not None:
     )
     #global new prediction all countries
     modified_global_df = orig_global_df.assign(
-        annual_healthcare_expenditure_per_capita = lambda x: x["annual_healthcare_expenditure_per_capita"] * (1 + indicators["ahec"] / 100),
-        gdp_per_capita_worldbank = lambda x: x["gdp_per_capita_worldbank"] * (1 + indicators["gdp"] / 100),
-        
+        annual_healthcare_expenditure_per_capita = lambda x: x["annual_healthcare_expenditure_per_capita"] + (10200 - x["annual_healthcare_expenditure_per_capita"]) * (indicators["ahec"] / 100), 
+        gdp_per_capita_worldbank = lambda x: x["gdp_per_capita_worldbank"] + (140000 - x["gdp_per_capita_worldbank"]) * (indicators["gdp"] / 100),         
         nurses_and_midwives_per_1000_people = lambda x: x["nurses_and_midwives_per_1000_people"] + (21 - x["nurses_and_midwives_per_1000_people"]) * (indicators["nm"] / 100), #* (1 + indicators["nm"] / 100),
         physicians_per_1000_people = lambda x: x["physicians_per_1000_people"] + (9 - x["physicians_per_1000_people"]) * (indicators["phys"] / 100),      
         prevalence_of_undernourishment = lambda x: x["prevalence_of_undernourishment"] - (x["prevalence_of_undernourishment"] - 0) * (indicators["undernourishment"] / 100), 
@@ -401,7 +399,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
         base_bandwidth = df_preds['band_width_base'].mean().round(2)
         new_bandwidth = df_preds['band_width_whatif'].mean().round(2)
         st.markdown(f"###### :orange[{base_df['Entity'].iloc[0]}'s] uncertainty before feature simulations: {bw_med.round(2)} per 1000")
-        st.markdown(f"###### :orange[{base_df['Entity'].iloc[0]}'s] uncertainty  after feature simulations: {new_bandwidth} per 1000 ({((new_bandwidth-base_bandwidth).round(2))})")
+        st.markdown(f"###### :orange[{base_df['Entity'].iloc[0]}'s] uncertainty  after feature simulations: {new_bandwidth} per 1000 (Δ {((new_bandwidth-base_bandwidth).round(2))})")
         
         #Average Uncertainity change by income groups 
         bandwidth_orig_global_avg = (predicts_orig_global['pred_high'] - predicts_orig_global['pred_low']).groupby(predicts_orig_global['world_income_group']).mean().round(2)     
@@ -438,7 +436,8 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     if "changed_sliders" in st.session_state and st.session_state.changed_sliders:
         st.divider()
         st.divider()
-        st.markdown(f"##### Indicator Sensitivity on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions* (including the samples [{', '.join(map(str, sorted(years_select)))}] per country)")
+        st.markdown(f"##### Indicator Sensitivity* on the simulated U5MR prediction for :orange[{base_df['Entity'].iloc[0]}] & *by Income Groups* | *by World Regions* (including the samples [{', '.join(map(str, sorted(years_select)))}] per country)")
+        st.caption("*sensitivity is based on model predictions and limited <factor x income group> interactions")
         focusQ = ""
         
         if len(st.session_state.changed_sliders) > 1:

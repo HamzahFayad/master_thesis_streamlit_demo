@@ -36,7 +36,8 @@ def load_df():
  
 #Features
 DEFAULTS = {
-    #"gdp_per_capita_worldbank": 0.0,
+    "gdp_per_capita_worldbank": 0.0,
+    "annual_healthcare_expenditure_per_capita": 0.0,
     "nurses_and_midwives_per_1000_people": 0.0, 
     "physicians_per_1000_people": 0.0, 
     "prevalence_of_undernourishment": 0.0, 
@@ -71,21 +72,9 @@ def build_sidebar(years_df, years_select, country_select):
             
         #-------------------------------------------------
         st.markdown("#### Economic Performance & Welfare:")
-
-        #Annual Healthcare Exp. per capita
-        slider_vars["ahec"] = st.slider(
-        "Increase :orange[*annual health spending per capita*]",
-        min_value=0.0,
-        max_value=100.0,
-        value=0.0,
-        step=1.0,
-        format="%.1f%%",
-        help="The sum of public and private annual health expenditure per person. This data is adjusted for differences in living costs between countries, but it is not adjusted for inflation."
-        )
-        st.caption(
-        f"~ {(years_df['annual_healthcare_expenditure_per_capita'].median() * (1 + slider_vars['ahec'] / 100)):.2f} int. $"
-        )
-        st.space()
+        
+        if "ahec_val" not in st.session_state:
+            st.session_state.ahec_val = 0.0
             
         #GDP per capita
         slider_vars["gdp"] = st.slider(
@@ -97,13 +86,49 @@ def build_sidebar(years_df, years_select, country_select):
         format="%.1f%%",
         help="Average economic output per person in a country or region per year. This data is adjusted for inflation and differences in living costs between countries."
         )
+        current_val_gdp = years_df['gdp_per_capita_worldbank'].median()
+        new_val_gdp = current_val_gdp + (140000 - current_val_gdp) * (slider_vars["gdp"] / 100)
         st.caption(
-        f"~ {(years_df['gdp_per_capita_worldbank'].median() * (1 + slider_vars['gdp'] / 100)):.2f} int. $, PPP"
+        f"**current**: {(current_val_gdp):.2f} | **new**: {(new_val_gdp):.2f} int. $, PPP"
         )  
+         
+        #Only allow max ratio healthspending/gdp 0.15                   
+        max_ratio = 0.15  
+        currentA = years_df['annual_healthcare_expenditure_per_capita'].median()
+        
+        max_ahec_slider_raw = (max_ratio * new_val_gdp - currentA) / (10200 - currentA) * 100
+        max_ahec_slider = max(0.0, min(100.0, max_ahec_slider_raw))
+
+        if st.session_state.ahec_val > max_ahec_slider:
+            st.session_state.ahec_val = float(max_ahec_slider)
+        #Annual Healthcare Exp. per capita
+        slider_vars["ahec"] = st.slider(
+        "Increase :orange[*annual health spending per capita*]",
+        min_value=0.0,
+        max_value=float(max_ahec_slider),
+        step=1.0,
+        format="%.1f%%",
+        #key="ahec_val",
+        help="The sum of public and private annual health expenditure per person. This data is adjusted for differences in living costs between countries, but it is not adjusted for inflation."
+        )
+        current_val_ahec = currentA
+        new_val_ahec = current_val_ahec + (10200 - current_val_ahec) * (slider_vars["ahec"] / 100)
+        st.caption(
+        f"**current**: {(current_val_ahec):.2f} | **new**: {(new_val_ahec):.2f} int. $"
+        )
         st.space()
+
+        ratio = new_val_ahec / new_val_gdp if new_val_gdp > 0 else 0.0
+        #st.info(f"Health expenditure as percent of GDP: {ratio*100:.1f}%")
+        st.metric(
+            label="Health Expenditure (% of GDP)", 
+            value=f"{ratio*100:.1f}%", 
+            help="Public health expenditure divided by gross domestic product. The absolute resource for each country is different. That is why the percentage representation differs based on the country's economic power."
+        )
+        st.progress(min(ratio / max_ratio, 1.0))
         
         #Healthspending/GDP ratio
-        slider_vars["health_gdp"] = st.slider(
+        """slider_vars["health_gdp"] = st.slider(
         ":material/balance: Increase ratio :orange[*healthspending / gdp per capita*]",
         min_value=0.0,
         max_value=100.0,
@@ -118,8 +143,8 @@ def build_sidebar(years_df, years_select, country_select):
         st.caption(
         f"~ **current**: {(current_health_gdp):.2f} | **new**: {(new_health_gdp):.2f}"
         )  
+        st.space()"""
         st.space()
-            
         #-------------------------------------------------
         st.markdown("#### Medical Health:")
         
