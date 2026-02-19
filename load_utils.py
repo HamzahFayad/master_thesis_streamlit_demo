@@ -84,6 +84,7 @@ def build_sidebar(years_df, years_select, country_select):
         value=0.0,
         step=1.0,
         format="%.1f%%",
+        key="gdp_per_capita_worldbank",
         help="Average economic output per person in a country or region per year. This data is adjusted for inflation and differences in living costs between countries."
         )
         current_val_gdp = years_df['gdp_per_capita_worldbank'].median()
@@ -108,7 +109,7 @@ def build_sidebar(years_df, years_select, country_select):
         max_value=float(max_ahec_slider),
         step=1.0,
         format="%.1f%%",
-        #key="ahec_val",
+        key="annual_healthcare_expenditure_per_capita",
         help="The sum of public and private annual health expenditure per person. This data is adjusted for differences in living costs between countries, but it is not adjusted for inflation."
         )
         current_val_ahec = currentA
