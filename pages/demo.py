@@ -396,32 +396,49 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     #----------------------------------- 
         
         #Uncertainty change for chosen country
-        base_bandwidth = df_preds['band_width_base'].mean().round(2)
-        new_bandwidth = df_preds['band_width_whatif'].mean().round(2)
+        base_bandwidth = df_preds['band_width_base'].median().round(2)
+        new_bandwidth = df_preds['band_width_whatif'].median().round(2)
         st.markdown(f"###### :orange[{base_df['Entity'].iloc[0]}'s] uncertainty before feature simulations: {bw_med.round(2)} per 1000")
         st.markdown(f"###### :orange[{base_df['Entity'].iloc[0]}'s] uncertainty  after feature simulations: {new_bandwidth} per 1000 (Δ {((new_bandwidth-base_bandwidth).round(2))})")
         
         #Average Uncertainity change by income groups 
-        bandwidth_orig_global_avg = (predicts_orig_global['pred_high'] - predicts_orig_global['pred_low']).groupby(predicts_orig_global['world_income_group']).mean().round(2)     
-        bandwidth_new_global_avg = (predicts_new_global['pred_high'] - predicts_new_global['pred_low']).groupby(predicts_new_global['world_income_group']).mean().round(2)  
+        bandwidth_orig_global_avg = (predicts_orig_global['pred_high'] - predicts_orig_global['pred_low']).groupby(predicts_orig_global['world_income_group']).median().round(2)     
+        bandwidth_new_global_avg = (predicts_new_global['pred_high'] - predicts_new_global['pred_low']).groupby(predicts_new_global['world_income_group']).median().round(2)  
+        bandwidth__orig_iqr = (predicts_orig_global['pred_high'] - predicts_orig_global['pred_low']).groupby(predicts_orig_global['world_income_group']).agg(unc_025 = lambda x: x.quantile(0.25), unc_075 = lambda x: x.quantile(0.75)).round(2)    
+        bandwidth__new_iqr = (predicts_new_global['pred_high'] - predicts_new_global['pred_low']).groupby(predicts_new_global['world_income_group']).agg(unc_025 = lambda x: x.quantile(0.25), unc_075 = lambda x: x.quantile(0.75)).round(2)      
+        
         unc_plot = pd.DataFrame({
             "Group": bandwidth_orig_global_avg.index,
             "Original": bandwidth_orig_global_avg.values,
+            "iqr_orig_025": bandwidth__orig_iqr["unc_025"].values,
+            "iqr_orig_075": bandwidth__orig_iqr["unc_075"].values,
             "New": bandwidth_new_global_avg.values,
+            "iqr_new_025": bandwidth__new_iqr["unc_025"].values,
+            "iqr_new_075": bandwidth__new_iqr["unc_075"].values,
             "Delta": (bandwidth_new_global_avg - bandwidth_orig_global_avg).values
         }).sort_values(by="Delta", ascending=False)
 
         plt.figure(figsize=(10, 6))
         plt.hlines(y=unc_plot["Group"], xmin=unc_plot["Original"], xmax=unc_plot["New"], 
-                color='grey', alpha=0.5, linewidth=2)
-        sns.scatterplot(data=unc_plot, x="Original", y="Group", color="red", label="uncertainty before simulation", s=120)
-        sns.scatterplot(data=unc_plot, x="New", y="Group", color="green", label="uncertainty after simulation", s=120)
+                color="black", alpha=0.6, linewidth=2)
+        #original uncertainty 
+        sns.scatterplot(data=unc_plot, x="Original", y="Group", color="red", label="uncertainty before simulation", s=250)
+        sns.scatterplot(data=unc_plot, x="iqr_orig_025", y="Group", color="red", s=60, alpha=0.15)
+        sns.scatterplot(data=unc_plot, x="iqr_orig_075", y="Group", color="red", s=60, alpha=0.15)
+        plt.hlines(y=unc_plot["Group"], xmin=unc_plot["iqr_orig_025"], xmax=unc_plot["iqr_orig_075"], 
+           colors="red", alpha=0.15, linewidth=8)
+        #new uncertainty shift 
+        sns.scatterplot(data=unc_plot, x="New", y="Group", color="green", label="uncertainty after simulation", s=250)
+        sns.scatterplot(data=unc_plot, x="iqr_new_025", y="Group", color="green", s=60, alpha=0.15)
+        sns.scatterplot(data=unc_plot, x="iqr_new_075", y="Group", color="green", s=60, alpha=0.15)
+        plt.hlines(y=unc_plot["Group"], xmin=unc_plot["iqr_new_025"], xmax=unc_plot["iqr_new_075"], 
+           colors="green", alpha=0.15, linewidth=8)
         for i in range(unc_plot.shape[0]):
             delta_val = unc_plot["Delta"].iloc[i]
             plt.text(unc_plot["New"].iloc[i] + 0.01, i - 0.15, 
                     f"{delta_val:+.2f}", va="center", fontweight="bold")
 
-        plt.title("Average change of the uncertainty per income group")
+        plt.title("IncomeGroup specific change of the uncertainty (Median ± IQR)")
         plt.xlabel("Uncertainty (Q0.75 - Q0.25)")
         plt.legend()
         st.pyplot(plt)
@@ -448,9 +465,9 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
         choose_factor = st.selectbox(label="Sensitivity of factor:", options=list_features, key="factor")
         abs_eff_col, rel_eff_col = st.columns(2)
         with abs_eff_col:
-            choose_group = st.radio("Impact segmented by:", ["world_income_group", "world_regions_wb"], horizontal=True, key="group")
+            choose_group = st.radio("Impact segmented by:", ["world_income_group", "world_regions_wb"], key="group")
         with rel_eff_col:
-            choose_effect = st.radio("Absolute vs. Relative sensitivity:", ["absolute impact (per 1000)", "relative impact (%)"], horizontal=True, key="effect")
+            choose_effect = st.radio("Absolute vs. Relative sensitivity:", ["absolute impact (per 1000)", "relative impact (elasticity in %)"], key="effect")
                 
         #Show Focus Quantile Scatterplot
         if focus_quant_025:
@@ -469,7 +486,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             predicts_new_global[choose_effect] = y_pred_new_global - y_pred_orig_global   #absolut
         else:
             predicts_new_global[choose_effect] = ((y_pred_new_global - y_pred_orig_global) / y_pred_orig_global) * 100 #relativ
-        country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby([choose_group, choose_factor, "Entity", focusQ])[choose_effect].mean().reset_index()        
+        country_med = predicts_new_global[predicts_new_global["Year"].isin(years_select)].groupby([choose_group, choose_factor, "Entity", focusQ])[choose_effect].median().reset_index()        
         
         #Sensitivity Plot (Scatterplot)
         col_sens1, col_sens2, col_sens3 = st.columns([1, 10, 1])
@@ -498,22 +515,26 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
             if choose_group == "world_income_group":
                 # sensitivity of chosen country and avg of income groups as comparison (focus quantile)
                 sens_col1, sens_col2 = st.columns(2, border=True) 
-                avg_country = country_med.loc[country_med['Entity']==country_select][choose_effect].mean()
+                avg_country = country_med.loc[country_med['Entity']==country_select][choose_effect].median()
+                iqr_avg_country = country_med.loc[country_med['Entity']==country_select][choose_effect].agg(imp_025 = lambda x: x.quantile(0.25), imp_075 = lambda x: x.quantile(0.75))
                 income_of_country = country_med.loc[country_med['Entity']==country_select]["world_income_group"].iloc[-1]
-                avg_income_of_country = country_med[country_med['world_income_group'] == income_of_country][choose_effect].mean()
+                avg_income_of_country = country_med[country_med['world_income_group'] == income_of_country][choose_effect].median()
+                iqr_income_of_country = country_med[country_med['world_income_group'] == income_of_country][choose_effect].agg(imp_025 = lambda x: x.quantile(0.25), imp_075 = lambda x: x.quantile(0.75))
+
                 with sens_col1:
                     st.metric(
-                        label=f"{income_of_country} average U5MR reduction", 
-                        value=f"{avg_income_of_country:.2f}",
+                        label=f"{income_of_country} U5MR reduction (median)", 
+                        value=f"{avg_income_of_country:.2f}"
                     )
+                    st.caption(f"IQR: ({iqr_income_of_country['imp_025']:.2f}, {iqr_income_of_country['imp_075']:.2f})")
                     with st.container():
                         st.caption(choose_effect)
                 with sens_col2:
                     st.metric(
                         label=f"U5MR reduction for {country_select}",
                         value=f"{avg_country:.2f}",
-                        #delta=f"{(avg_country - avg_lowincome):.2f}"
                     )
+                    st.caption(f"IQR: ({iqr_avg_country['imp_025']:.2f}, {iqr_avg_country['imp_075']:.2f})")
                     with st.container():
                         st.caption(choose_effect)
                         
@@ -524,11 +545,13 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                 for col, n in zip(sens_cols, other_income_c):
                     with col:
                         income_g = others[others["world_income_group"] == n]
-                        current_value = income_g[choose_effect].mean()
+                        iqr_income_g = income_g[choose_effect].agg(imp_025 = lambda x: x.quantile(0.25), imp_075 = lambda x: x.quantile(0.75))
+                        current_value = income_g[choose_effect].median()
                         st.metric(
                             label=f"{n}",
                             value=f"{current_value:.2f}"
                         )
+                        st.caption(f"IQR: ({iqr_income_g['imp_025']:.2f}, {iqr_income_g['imp_075']:.2f})")
                         with st.container():
                             st.caption(choose_effect)
                             
