@@ -161,8 +161,8 @@ if years_select and country_select is not None:
         pred_med  = qr_models["med"].predict(X_new_others) + SHIFT["q50"],
         pred_high = qr_models["high"].predict(X_new_others) + SHIFT["q75"]
     )  
-
     st.divider()
+    
     # ----------------------------------
     # ___________PART 1___________
     # SHOW REFERENCE Q-MODELS PREDICTIONS 
@@ -338,14 +338,49 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
         if focus_quant_075:
             with st.container():
                 st.success("Focus Quantile")
-                
-    st.space()
-    tab_local_new = st.tabs(["Local View"])[0] 
     
+    st.space()               
+    #GOAL: global U5MR 25 per 1000
+    goal_u5mr = 25
+    st.markdown("##### Sustainable Development Goals - 3.2.1 goal to reduce U5MR by 2030 for all countries to *25 per 1000*")
+    note_help = "The prediction is a result of a machine learning model bsed on a limited dataset and selection of factors. It does not guarantee that the mortality rate will be reduced."
+    if focus_quant_025:
+        progress_u5mr = (q25_pred.min() - q25_new.min()) / (q25_pred.min() - goal_u5mr)
+        progress_u5mr = max(0, (min(progress_u5mr, 1)))
+        progress_perc = int(progress_u5mr * 100)
+        if q25_new.min() <= goal_u5mr:
+            st.write(f":orange[{base_df['Entity'].iloc[0]}] already surpassed SDG's U5MR goal")
+        else:
+            st.markdown(f"Progress for :orange[{base_df['Entity'].iloc[0]}]: {progress_perc:.1f}%",
+                        help=note_help)
+            st.progress(progress_perc)
+    if focus_quant_05:
+        progress_u5mr = (q50_pred.min() - q50_new.min()) / (q50_pred.min() - goal_u5mr)
+        progress_u5mr = max(0, (min(progress_u5mr, 1)))
+        progress_perc = int(progress_u5mr * 100)
+        if q50_new.min() <= goal_u5mr:
+            st.write(f":orange[{base_df['Entity'].iloc[0]}] already surpassed SDG's U5MR goal")
+        else:
+            st.markdown(f"Progress for :orange[{base_df['Entity'].iloc[0]}]: {progress_perc:.1f}%",
+                        help=note_help)
+            st.progress(progress_perc)
+    if focus_quant_075:
+        progress_u5mr = (q75_pred.min() - q75_new.min()) / (q75_pred.min() - goal_u5mr)
+        progress_u5mr = max(0, (min(progress_u5mr, 1)))
+        progress_perc = int(progress_u5mr * 100)
+        if q75_new.min() <= goal_u5mr:
+            st.write(f":orange[{base_df['Entity'].iloc[0]}] already surpassed SDG's U5MR goal")
+        else:
+            st.markdown(f"Progress for :orange[{base_df['Entity'].iloc[0]}]: {progress_perc:.1f}%",
+                        help=note_help)
+            st.progress(progress_perc)
+    st.space()
+
     # ----------------------------------
     # SHOW LOCAL SHAP PLOT  
     # AFTER SIMULATION
     #----------------------------------- 
+    tab_local_new = st.tabs(["Local View"])[0] 
     chart_by_income = df_ref.loc[df_ref["world_income_group"] == X_original["world_income_group"].iloc[-1]]
     
     with tab_local_new:
