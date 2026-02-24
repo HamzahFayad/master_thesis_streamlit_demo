@@ -14,7 +14,7 @@ about = '''
         
         Statistics show that childrens' survival chances are steadily increasing globally while differences between countries remain large.
         In 2022, around 5 million deaths of children under five were recorded (rate: 38 per 1000) - a 50% reduction since 2000.
-        The SDG goal 3.2.1 intends to reduce the child mortality rate to 25 per 1000 worldwide until 2030.
+        The SDG goal 3.2.1 intends to reduce the child mortality rate to 25 per 1000 worldwide by 2030.
         According to recent reports by UN IGME this goal will not be reached in over 60 countries as of now.
         
         This hypothetical simulation tool aims users to learn correlations between different 
