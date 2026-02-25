@@ -344,7 +344,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
     #GOAL: global U5MR 25 per 1000
     goal_u5mr = 25
     st.markdown("##### Sustainable Development Goals - 3.2.1 goal to reduce U5MR by 2030 for all countries to :orange[*25 per 1000*]")
-    note_help = "The prediction is a result of a machine learning model bsed on a limited dataset and selection of factors. It does not guarantee that the mortality rate will be reduced."
+    note_help = "The prediction is a result of a machine learning model based on a limited dataset and selection of factors. It does not guarantee that the mortality rate will be reduced."
     if focus_quant_025:
         progress_u5mr = (q25_pred.min() - q25_new.min()) / (q25_pred.min() - goal_u5mr)
         progress_u5mr = max(0, (min(progress_u5mr, 1)))
