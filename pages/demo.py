@@ -20,9 +20,9 @@ from load_utils import load_models, load_df, build_sidebar, shap_plot, shap_deci
 
 # shifts to correct "Coverage"
 SHIFT = {
-    "q25": -0.72, #-0.3824, #-0.8974
-    "q50": -1.29, #-0.6396, #-0.3152
-    "q75": -0.31 #-0.5392  #-0.8829
+    "q25": -0.54, #-0.3824, #-0.8974
+    "q50": -0.35, #-0.6396, #-0.3152
+    "q75": -0.33 #-0.5392  #-0.8829
 } 
 
 # ----------------------------------
@@ -163,7 +163,7 @@ if years_select and country_select is not None:
     )  
     
     st.divider()
-    
+
     # ----------------------------------
     # ___________PART 1___________
     # SHOW REFERENCE Q-MODELS PREDICTIONS 
@@ -171,13 +171,13 @@ if years_select and country_select is not None:
     # PLUS QUANTILE FOCUS
     #----------------------------------- 
 
-    q05_pos = predicts_original["q05_pos"].mean()
-    bw_med = predicts_original["bandwidth"].mean()
-    bw_med_pos = predicts_original["bandwidth_pos"].mean()
+    q05_pos = predicts_original["q05_pos"].min()
+    bw_med = predicts_original["bandwidth"].min()
+    bw_med_pos = predicts_original["bandwidth_pos"].min()
     
     st.markdown(f"##### :orange[{base_df['Entity'].iloc[0]}'s] reference predicted child mortality rate for {' | '.join(map(str, sorted(years_select)))}")
     st.write(f"Based on a global reference, the corresponding quantile prediction specific to {base_df['Entity'].iloc[0]} in comparison to the remaining data is highlighted.")
-    st.write("For convenience, each quantile reference prediction shows the smallest U5MR value if multiple years are chosen. The charts below show the predictions of the chosen years.")
+    st.write("For convenience, each quantile reference prediction shows the smallest U5MR value if multiple years are chosen. The charts below show the predictions of all chosen years.")
     st.markdown(f"###### Without any indicator adjustments the U5MR prediction for {base_df['Entity'].iloc[0]} is:")
     
     focus_quant_025 = False

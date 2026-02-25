@@ -27,8 +27,6 @@ def data_preparation():
 
 prepared_df = data_preparation()
 
-#low_incomes = ['High-income countries', 'Upper-middle-income countries']
-#prepared_df = prepared_df[prepared_df['world_income_group'].isin(low_incomes)]
 # ----------------------------------
 # VARIABLES: Features, Target, Group
 #-----------------------------------

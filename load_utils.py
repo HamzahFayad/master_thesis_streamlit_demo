@@ -11,19 +11,11 @@ import shap
 @st.cache_resource 
 def load_models():
     return {
-        "low": joblib.load("model_final/int_quantile_025.pkl"),    
-        "med": joblib.load("model_final/int_quantile_05.pkl"),   
-        "high": joblib.load("model_final/int_quantile_075.pkl")
+        "low": joblib.load("model_final/new_quantile_025.pkl"),    
+        "med": joblib.load("model_final/new_quantile_05.pkl"),   
+        "high": joblib.load("model_final/new_quantile_075.pkl")
     } 
-"""    
-def load_models(income):
-    print(income)
-    return {
-        "low": joblib.load(f"model/{income}_quantiles_new_0.25.pkl"),    
-        "med": joblib.load(f"model/{income}_quantiles_new_0.5.pkl"),   
-        "high": joblib.load(f"model/{income}_quantiles_new_0.75.pkl")
-    } 
-"""
+
 # ----------------------------------
 # REFERENCE DATASET 
 #-----------------------------------     
@@ -373,7 +365,7 @@ def shap_plot(qr_models, X, quant, title):
         #shap.plots.bar(shapvals.abs.sum(0))
         #shap.plots.waterfall(shapvals[4])
         shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, 
-                          plot_size=[12,6], max_display=15, show=False)
+                          plot_size=[12,6], max_display=10, show=False)
         plt.title(f"Features Impact on the Prediction: {title}")
         st.pyplot(fig)
         plt.clf()
