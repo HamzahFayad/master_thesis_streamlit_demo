@@ -496,6 +496,8 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
         if len(st.session_state.changed_sliders) > 1:
             st.info(f"Since more than one factor were changed *[**{', '.join(st.session_state.changed_sliders)}**]*, the plots show the sensitivity taking into account all active sliders.")
     
+        #TODO: 
+        #Multiselect Countries to add to plot (comparison to chosen country)
         #Choose factor, group, effect type
         list_features = st.session_state.changed_sliders
         choose_factor = st.selectbox(label="Sensitivity of factor:", options=list_features, key="factor")
@@ -604,17 +606,7 @@ if st.session_state.simulate_btn and (years_select and country_select is not Non
                 #                options=df_ref["Entity"].unique().tolist(),
                 #                max_selections=2,
                 #                placeholder="Countries")  
-    #-------------- 
-    #--------------   
-    #--------------   
-    #--------------   
-    #--------------   
-    #--------------   
-    #--------------     
-    #st.info(f"ORIGINAL PRED (25%, 50%, 75%): "
-    #    f"{predicts_original['pred_low'].median():.2f}, {predicts_original['pred_med'].median():.2f}, {predicts_original['pred_high'].median():.2f}")
-    #st.info(f"NEW PRED (25%, 50%, 75%): "
-    #    f"{predicts_new['pred_low'].tolist()}, {predicts_new['pred_med'].median():.2f}, {predicts_new['pred_high'].median():.2f}")
+    #---------------------------------------------------- 
     st.divider()
     expander = st.expander(f"For reference, view actual historical child mortality rates for {base_df['Entity'].iloc[0]} (ground truth)")
     for i, (idx, row) in enumerate(years_df.iterrows()):        

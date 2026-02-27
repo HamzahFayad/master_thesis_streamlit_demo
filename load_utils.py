@@ -21,7 +21,6 @@ def load_models():
 #-----------------------------------     
 @st.cache_data
 def load_df():
-    #df = pd.read_csv("reference_data/base_df.csv")
     df = pd.read_csv("reference_data/reference_df.csv")
     return df
  
