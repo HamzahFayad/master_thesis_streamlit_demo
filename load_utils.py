@@ -119,23 +119,6 @@ def build_sidebar(years_df, years_select, country_select):
         )
         st.progress(min(ratio / max_ratio, 1.0))
         
-        #Healthspending/GDP ratio
-        """slider_vars["health_gdp"] = st.slider(
-        ":material/balance: Increase ratio :orange[*healthspending / gdp per capita*]",
-        min_value=0.0,
-        max_value=100.0,
-        value=0.0,
-        step=1.0,
-        format="%.1f%%",
-        key="health_gdp",
-        help="Average economic output per person in a country or region per year. This data is adjusted for inflation and differences in living costs between countries."
-        )
-        current_health_gdp = years_df['annual_healthcare_expenditure_per_capita'].median() / years_df['gdp_per_capita_worldbank'].median()
-        new_health_gdp = current_health_gdp + (0.20 - current_health_gdp) * (slider_vars["health_gdp"] / 100)
-        st.caption(
-        f"~ **current**: {(current_health_gdp):.2f} | **new**: {(new_health_gdp):.2f}"
-        )  
-        st.space()"""
         st.space()
         #-------------------------------------------------
         st.markdown("#### Medical Health:")
@@ -180,7 +163,7 @@ def build_sidebar(years_df, years_select, country_select):
         slider_vars["vaccination"] = st.slider(
         ":material/syringe: Increase :orange[*vaccination coverage*] (%)",
         min_value=0.0,
-        max_value=100.0, #- float(years_df["vaccination_coverage_who_unicef"].max()),
+        max_value=100.0, 
         value=0.0,
         step=1.0,
         disabled=years_df['vaccination_coverage_who_unicef'].median() >= 99.9,
@@ -202,8 +185,7 @@ def build_sidebar(years_df, years_select, country_select):
         slider_vars["urban"] = st.slider(
         ":material/apartment: Increase :orange[*share of population urban*] (%)",
         min_value=0.0,
-        max_value=100.0, #- float(years_df["share_of_population_urban"].max()) if not years_df['share_of_population_urban'].median() >= 100.0 else 0.5,
-        #max_value=float(100.0 / years_df["share_of_population_urban"].median() -1) * 100, #50.0,
+        max_value=100.0, 
         value=0.0,
         step=1.0,
         format="%.1f%%",
@@ -221,8 +203,7 @@ def build_sidebar(years_df, years_select, country_select):
         #Prevalence of undernourishment
         slider_vars["undernourishment"] = st.slider(
         ":material/dining: Decrease :orange[*prevalence of undernourishment*] (%)",
-        #min_value=-100.0,
-        min_value=0.0, #-float(years_df['prevalence_of_undernourishment'].min()),
+        min_value=0.0,
         max_value=100.0,
         value=0.0,
         step=1.0,
@@ -241,8 +222,7 @@ def build_sidebar(years_df, years_select, country_select):
         #Share without improved water 
         slider_vars["water"] = st.slider(
         ":material/water_drop: Decrease :orange[*share of population without improved water*] (%)",
-        #min_value=-float(years_df['share_without_improved_water'].min()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
-        min_value= 0.0, #-float(years_df['share_without_improved_water'].median()) if not years_df['share_without_improved_water'].median() <= 0.1 else -1.0,
+        min_value= 0.0, 
         max_value=100.0,
         value=0.0,
         step=1.0,
@@ -265,7 +245,7 @@ def build_sidebar(years_df, years_select, country_select):
         slider_vars["school"] = st.slider(
         ":material/school: Increase :orange[*years of schooling*] (%)",
         min_value=0.0,
-        max_value=100.0, #float(max(0.0, 14.0 - years_df['years_of_schooling'].median())) if not years_df['years_of_schooling'].median() > 14.0 else 0.5,
+        max_value=100.0, 
         value=0.0,
         step=1.0,
         disabled=years_df['years_of_schooling'].median() >= 14.0,
@@ -276,7 +256,6 @@ def build_sidebar(years_df, years_select, country_select):
         current_val_school = years_df['years_of_schooling'].median()
         new_val_school = current_val_school + (14 - current_val_school) * (slider_vars["school"] / 100)
         st.caption(
-        #f"**current**: {(current_val_school):.1f} school years {f'| **new**: {(new_val_school):.1f} school years' if new_val_school != current_val_school else '' }"
         f"**current**: {(current_val_school):.1f} school years | **new**: {(new_val_school):.1f} school years"
         )
         st.space()
@@ -298,8 +277,6 @@ def build_sidebar(years_df, years_select, country_select):
 #----------------------------------- 
 def rename_features(feature_names):
     rename_features = {
-    #"annual_healthcare_expenditure_per_capita": "annual_healthcare_expenditure_per_capita",
-    #"gdp_per_capita_worldbank": "gdp_per_capita_worldbank",
     "healthspending_gdp_ratio": "healthspending_gdp_ratio",
     "nurses_and_midwives_per_1000_people": "nurses_and_midwives_per_1000_people",
     "physicians_per_1000_people": "physicians_per_1000_people",
@@ -308,7 +285,6 @@ def rename_features(feature_names):
     "share_without_improved_water": "share_without_improved_water", 
     "vaccination_coverage_who_unicef": "vaccination_coverage_who_unicef",
     "years_of_schooling": "years_of_schooling",
-    #"health_gdp_ratio_x_world_income_group_Upper-middle-income countries": "healthspending_gdp_ratio * upper-middle-income countries"    
     }
     prefix = ["world_regions_wb_", "world_income_group_"]
     
@@ -344,11 +320,7 @@ def create_shap_by_models(qr_models, X, quant):
     expl = setup_shap(model, X_transformed)
     shapvals = expl(X_transformed)    
     shapvals.feature_names = list(new_feature_names)
-    #print(new_feature_names)
-    #bv_expanded = shapvals.base_values[:, None]
-    #shapvals.values = np.expm1(shapvals.values + bv_expanded) - np.expm1(bv_expanded)
-    #shapvals.base_values = np.expm1(shapvals.base_values)
-    
+
     return X_transformed, new_feature_names, shapvals
 
 # ----------------------------------
@@ -361,8 +333,6 @@ def shap_plot(qr_models, X, quant, title):
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
         fig, ax = plt.subplots(figsize=(12, 6))
-        #shap.plots.bar(shapvals.abs.sum(0))
-        #shap.plots.waterfall(shapvals[4])
         shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, 
                           plot_size=[12,6], max_display=10, show=False)
         plt.title(f"Features Impact on the Prediction: {title}")
@@ -379,7 +349,6 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
 
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
-        #shap.initjs()
         fig, ax = plt.subplots(figsize=(12, 6))
         mask = shapvals[id].values != 0
         single_shap_value = shapvals[id]
@@ -397,6 +366,9 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
         new_labels = []
         current_yticklabels = ax.get_yticklabels()
 
+        # show original values (not logtransformed) for features in SHAP Plot
+        # SHAP does not provide this directly
+        # Help with ChatGPT
         for label in current_yticklabels:
             text = label.get_text()  
             if '=' in text and "healthspending_gdp_ratio" in text:
@@ -404,12 +376,6 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
                 ratio = orig_row["annual_healthcare_expenditure_per_capita"] / orig_row["gdp_per_capita_worldbank"]
                 formatted_ratio = f"{ratio:,.2f}"
                 new_labels.append(f"{formatted_ratio} = {ratio_name}") 
-            #elif '=' in text and "urban_x_medical_access" in text:
-            #    um_name = "urban_x_medical_access"
-            #    urban_medical = (orig_row["nurses_and_midwives_per_1000_people"] + orig_row["physicians_per_1000_people"]) * orig_row["share_of_population_urban"]
-            #    formatted_um = f"{urban_medical:,.2f}"
-            #   new_labels.append(f"{formatted_um} = {um_name}") 
-                #new_labels.remove(text)
             elif '=' in text:
                 txt_parts = text.split('=')
                 name_part = txt_parts[-1].strip()         
@@ -432,12 +398,13 @@ def shap_decision_plot(qr_models, X, quant, title, prediction, id):
                 new_labels.append(text)
 
         ax.set_yticklabels(new_labels)
-        #ax.set_yticklabels([label.get_text().split('=')[-1].strip() if '=' in label.get_text() else label.get_text() for label in ax.get_yticklabels()])
         plt.title(f"Features Impact on one single prediction: {title}")
         st.pyplot(fig)
         plt.clf()
         plt.close()
 
+
+#Other Plot Types for Testing, not used
 # ----------------------------------
 # BAR PLOT BY INCOME GROUP
 #-----------------------------------  
@@ -448,9 +415,7 @@ def shap_bar_plot(qr_models, X, quant, title):
     
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
-        fig, ax = plt.subplots(figsize=(12, 6))
-        #shap.summary_plot(shapvals, X_transformed, feature_names=new_feature_names, 
-        #                  plot_size=[12,6], max_display=24, show=False)  
+        fig, ax = plt.subplots(figsize=(12, 6)) 
         shap.dependence_plot("years_of_schooling", shapvals.values, X_transformed)      
         plt.title(f"Features Impact on the Prediction: {title}")
         st.pyplot(fig) 

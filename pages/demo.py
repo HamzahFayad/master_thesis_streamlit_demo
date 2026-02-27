@@ -20,9 +20,9 @@ from load_utils import load_models, load_df, build_sidebar, shap_plot, shap_deci
 
 # shifts to correct "Coverage"
 SHIFT = {
-    "q25": -0.54, #-0.3824, #-0.8974
-    "q50": -0.35, #-0.6396, #-0.3152
-    "q75": -0.33 #-0.5392  #-0.8829
+    "q25": -0.54, 
+    "q50": -0.35, 
+    "q75": -0.33 
 } 
 
 # ----------------------------------
