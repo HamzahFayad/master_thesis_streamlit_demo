@@ -8,7 +8,9 @@ Streamlit Tool zur Masterarbeit:
 --------------------------------------------
 ### Projekt
 
-Ein szenariobasiertes Simulationstool, welches die U5MR Vorhersage auf Länderebene hypothetisch simuliert
+Ein szenariobasiertes Simulationstool, welches die U5MR Vorhersage auf Länderebene hypothetisch simuliert:
+
+> https://childmortalityrate-simulation.streamlit.app/
 
 #### Home
 - Einführung
@@ -24,8 +26,8 @@ Fokus Quantil anhand globalem Referenzvergleich
 - Unsicherheiten als Quantiles (0.25, 0.5, 0.75); Best-/Worst-Case Vorhersagen; inklusive absolute & prozentuale Differenzen
 - SHAP Plot zur lokalen Erklärbarkeit der simulierten Vorhersage pro Jahr  
 ##### Sensitivität
-- Änderung der durchschnittl. uncertainty je Einkommensklasse
-- Sensitivitätsvorschau nach Einkommensklassen / Weltregionen je Featureänderung (absolut, relativ)
+- Änderung der durchschnittl. uncertainty je Einkommensgruppe
+- Sensitivitätsvorschau nach Einkommensgruppen / Weltregionen je Featureänderung (absolut, relativ)
 
 ---------------------------------------
 ##### Setup um die App lokal zu starten
